@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, List
-from sqlalchemy import String, Enum, Boolean, DateTime, ForeignKey
+from typing import List, Optional
+from sqlalchemy import String, Boolean, ForeignKey, DateTime, Enum
+from sqlalchemy.dialects.postgresql import UUID  # <-- MAKE SURE THIS LINE IS PRESENT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.base import Base, TimestampMixin
+
+from app.db.base import Base, TimestampMixin
 from app.models.enums import UserRole
 
 class User(Base, TimestampMixin):
@@ -14,12 +16,12 @@ class User(Base, TimestampMixin):
     role: Mapped[str]= mapped_column(Enum(UserRole), nullable=False)
     is_active: Mapped[bool]= mapped_column(Boolean, default=True)
 
-    freelancer_profile: Mapped["FreelancerProfile"] = relationship("FreelancerProfile", back_populates="user", uselist=False)
-    client_profile: Mapped["ClientProfile"] = relationship("ClientProfile", back_populates="user", uselist=False)   
-    jobs: Mapped[List["Job"]] = relationship("Job", back_populates="posted_by")
-    proposals: Mapped[List["Proposal"]] = relationship("Proposal", back_populates="user")
-    contracts: Mapped[List["Contract"]] = relationship("Contract", back_populates="user")
-    reviews: Mapped[List["Review"]] = relationship("Review", back_populates="user")
+    # freelancer_profile: Mapped["FreelancerProfile"] = relationship("FreelancerProfile", back_populates="user", uselist=False)
+    # client_profile: Mapped["ClientProfile"] = relationship("ClientProfile", back_populates="user", uselist=False)   
+    # jobs: Mapped[List["Job"]] = relationship("Job", back_populates="posted_by")
+    # proposals: Mapped[List["Proposal"]] = relationship("Proposal", back_populates="user")
+    # contracts: Mapped[List["Contract"]] = relationship("Contract", back_populates="user")
+    # reviews: Mapped[List["Review"]] = relationship("Review", back_populates="user")
     
 
 class RefreshToken(Base):

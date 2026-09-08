@@ -1,18 +1,26 @@
 FROM python:3.11-slim
 
+# Install uv from official binary
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Set working directory
 WORKDIR /app
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Set environment variables for clean python execution
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app" \
+    PATH="/app/.venv/bin:$PATH"
+# Copy dependency definition files
+COPY pyproject.toml uv.lock* ./
 
-# Copy dependency specifications
-COPY pyproject.toml uv.lock ./
-
-# Install dependencies into system environment or container venv
-RUN uv sync --frozen --no-install-project
-
-# Copy application and migration files
+# Install dependencies into /app/.venv using uv
+RUN uv sync --no-install-project --no-dev
+# Copy the rest of the application code
 COPY . .
 
-# Run entrypoint or web service
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose default API port
+EXPOSE 8000
+
+# Run Alembic migrations and start FastAPI server
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
