@@ -31,7 +31,6 @@ class Job(Base, TimestampMixin):
         nullable=False
     )
 
-    # Relationships
     client: Mapped["User"] = relationship(back_populates="jobs")
     skills: Mapped[List["Skill"]] = relationship(secondary="job_skills", back_populates="jobs")
     proposals: Mapped[List["Proposal"]] = relationship(back_populates="job", cascade="all, delete-orphan")

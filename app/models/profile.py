@@ -34,6 +34,5 @@ class FreelancerProfile(Base, TimestampMixin):
     experience_years: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     availability: Mapped[str] = mapped_column(String(50), default="Available", nullable=False)
 
-    # Relationships
     user: Mapped["User"] = relationship(back_populates="profile")
     skills: Mapped[List["Skill"]] = relationship(secondary="freelancer_skills", back_populates="profiles")

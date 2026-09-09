@@ -23,12 +23,10 @@ class Proposal(Base, TimestampMixin):
         nullable=False
     )
 
-    # Table-level constraints
     __table_args__ = (
         UniqueConstraint("job_id", "freelancer_id", name="uq_job_freelancer_proposal"),
     )
 
-    # Relationships
     job: Mapped["Job"] = relationship(back_populates="proposals")
     freelancer: Mapped["User"] = relationship(back_populates="proposals")
     contract: Mapped[Optional["Contract"]] = relationship(back_populates="proposal", uselist=False)

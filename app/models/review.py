@@ -17,13 +17,10 @@ class Review(Base, TimestampMixin):
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
-        # Enforces one review per participant per contract
         UniqueConstraint("contract_id", "reviewer_id", name="uq_contract_reviewer"),
-        # Enforces rating scale between 1 and 5
         CheckConstraint("rating >= 1 AND rating <= 5", name="check_rating_range"),
     )
 
-    # Relationships
     contract: Mapped["Contract"] = relationship(back_populates="reviews")
     reviewer: Mapped["User"] = relationship(foreign_keys=[reviewer_id])
     reviewee: Mapped["User"] = relationship(foreign_keys=[reviewee_id])

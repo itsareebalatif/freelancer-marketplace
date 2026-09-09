@@ -1,20 +1,18 @@
+import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
 from sqlalchemy import create_engine, pool
+from dotenv import load_dotenv
 
-# Ensure root directory is in sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
+load_dotenv(BASE_DIR / ".env")
 
-# Import settings and Base
-from app.core.config import settings
 from app.db.base import Base
-
-# Import the User and RefreshToken models for this step
-from app.models.user import User, RefreshToken  # noqa: F401
+import app.models  # noqa: F401 — registers every model with Base.metadata
 
 config = context.config
 
@@ -23,11 +21,13 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+DATABASE_URL = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
+    url = DATABASE_URL
     context.configure(
-        url=settings.DATABASE_URL,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -38,10 +38,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    # Create the engine directly from settings to ensure psycopg3 is used
     connectable = create_engine(
-        settings.DATABASE_URL,
+        DATABASE_URL,
         poolclass=pool.NullPool,
     )
 

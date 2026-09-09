@@ -46,5 +46,4 @@ class Milestone(Base, TimestampMixin):
         nullable=False
     )
 
-    # Relationships
     contract: Mapped["Contract"] = relationship(back_populates="milestones")

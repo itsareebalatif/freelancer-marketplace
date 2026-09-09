@@ -95,3 +95,41 @@ freelancer-marketplace/
         ├── contracts.py          # /contracts/{id}, /contracts/{id}/complete
         ├── milestones.py         # /contracts/{id}/milestones, /milestones/{id}/submit
         └── reviews.py            # /contracts/{id}/reviews
+
+
+
+1. Build the image
+
+docker build -t freelancer-marketplace .
+This installs everything and copies your code in. Takes about 10-15 seconds after the first time (cached).
+
+2. Run the container
+
+docker run -d --name freelancer-api --env-file .env -p 8000:8000 freelancer-marketplace
+Breaking down what each part does:
+
+Part	Meaning
+-d	run in the background
+--name freelancer-api	so you can refer to it later instead of a random ID
+--env-file .env	loads your DATABASE_URL, JWT_SECRET, etc. into the container — your .env file itself never gets copied into the image (it's in .dockerignore), so secrets stay out of the built image and only exist at runtime
+-p 8000:8000	makes port 8000 inside the container reachable at localhost:8000 on your machine
+That's it. On startup the container automatically runs alembic upgrade head (applies any pending migrations) and then starts the API — you don't run those as separate steps.
+
+3. Check it worked
+
+curl http://localhost:8000/health
+Should return {"status":"ok"}. Swagger docs are at http://localhost:8000/docs.
+
+Everyday commands you'll actually use
+
+docker logs -f freelancer-api      # watch live logs (including your app's log lines)
+docker stop freelancer-api         # stop it
+docker start freelancer-api        # start it again (no rebuild needed)
+docker rm -f freelancer-api        # stop and remove it completely
+After you change code, you need to rebuild before the container picks it up:
+
+
+docker rm -f freelancer-api
+docker build -t freelancer-marketplace .
+docker run -d --name freelancer-api --env-file .env -p 8000:8000 freelancer-marketplace
+I just ran through all of this for real (build → run → hit /health → hit /docs → both returned 200) to make sure these exact commands work before giving them to you — no docker-compose file exists in this project, so this is genuinely the whole process.
