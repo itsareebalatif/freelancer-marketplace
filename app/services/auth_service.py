@@ -48,11 +48,7 @@ def login(db: Session, data: LoginRequest) -> tuple[str, str]:
 
     access_token = create_access_token(user_id=user.id, role=user.role)
 
-    # Reuse an existing, still-valid refresh token instead of minting a new one
-    # on every login — logging in again (e.g. re-testing in Swagger) shouldn't
-    # spawn a fresh 7-day session each time. A new refresh token is only issued
-    # if there's none active yet, or the previous one expired/was revoked
-    # (logout, or a rotation via /auth/refresh).
+    
     existing = RefreshTokenRepository(db).get_active_for_user(user.id)
     if existing is not None:
         logger.info("User %s logged in — reusing existing refresh token", user.id)
