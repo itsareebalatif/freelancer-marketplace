@@ -26,6 +26,7 @@ def register(db: Session, data: RegisterRequest) -> User:
 
     user = users.create(
         email=data.email,
+        full_name=data.full_name,
         hashed_password=hash_password(data.password),
         role=data.role,
     )
@@ -40,27 +41,18 @@ def _issue_tokens(db: Session, user: User) -> tuple[str, str]:
     return access_token, refresh_token
 
 
-def login(db: Session, data: LoginRequest) -> tuple[str, str]:
+def login(db: Session, data: LoginRequest) -> tuple[User, str, str]:
     user = UserRepository(db).get_by_email(data.email)
     if user is None or not verify_password(data.password, user.hashed_password):
         logger.warning("Failed login attempt for %s", data.email)
         raise UnauthorizedError("Incorrect email or password", code="INVALID_CREDENTIALS")
 
-    access_token = create_access_token(user_id=user.id, role=user.role)
-
-    
-    existing = RefreshTokenRepository(db).get_active_for_user(user.id)
-    if existing is not None:
-        logger.info("User %s logged in — reusing existing refresh token", user.id)
-        return access_token, existing.token
-
-    refresh_token = create_refresh_token()
-    RefreshTokenRepository(db).create(user_id=user.id, token=refresh_token)
-    logger.info("User %s logged in — issued new refresh token", user.id)
-    return access_token, refresh_token
+    access_token, refresh_token = _issue_tokens(db, user)
+    logger.info("User %s logged in", user.id)
+    return user, access_token, refresh_token
 
 
-def refresh(db: Session, refresh_token: str) -> tuple[str, str]:
+def refresh(db: Session, refresh_token: str) -> tuple[User, str, str]:
     tokens = RefreshTokenRepository(db)
     stored = tokens.get_by_token(refresh_token)
 
@@ -73,7 +65,8 @@ def refresh(db: Session, refresh_token: str) -> tuple[str, str]:
     tokens.revoke(stored)
     user = UserRepository(db).get_by_id(stored.user_id)
     logger.info("Refresh token rotated for user %s", user.id)
-    return _issue_tokens(db, user)
+    access_token, new_refresh_token = _issue_tokens(db, user)
+    return user, access_token, new_refresh_token
 
 
 def logout(db: Session, user: User) -> None:

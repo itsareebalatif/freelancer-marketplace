@@ -15,8 +15,8 @@ router = APIRouter(prefix="/profiles", tags=["profiles"])
 require_freelancer = require_role(UserRole.FREELANCER)
 
 
-@router.post("/me", response_model=FreelancerProfileOut, status_code=status.HTTP_201_CREATED)
-def create_my_profile(
+@router.post("", response_model=FreelancerProfileOut, status_code=status.HTTP_201_CREATED)
+def create_profile(
     data: FreelancerProfileCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),
@@ -24,16 +24,16 @@ def create_my_profile(
     return profile_service.create_profile(db, current_user, data)
 
 
-@router.get("/me", response_model=FreelancerProfileOut)
-def get_my_profile(
+@router.get("", response_model=FreelancerProfileOut)
+def get_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),
 ):
     return profile_service.get_my_profile(db, current_user)
 
 
-@router.patch("/me", response_model=FreelancerProfileOut)
-def update_my_profile(
+@router.patch("", response_model=FreelancerProfileOut)
+def update_profile(
     data: FreelancerProfileUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),
@@ -41,8 +41,8 @@ def update_my_profile(
     return profile_service.update_profile(db, current_user, data)
 
 
-@router.post("/me/skills/{skill_id}", response_model=FreelancerProfileOut)
-def add_my_skill(
+@router.post("/skills/{skill_id}", response_model=FreelancerProfileOut)
+def add_skill(
     skill_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),
@@ -50,8 +50,8 @@ def add_my_skill(
     return profile_service.add_skill(db, current_user, skill_id)
 
 
-@router.delete("/me/skills/{skill_id}", response_model=FreelancerProfileOut)
-def remove_my_skill(
+@router.delete("/skills/{skill_id}", response_model=FreelancerProfileOut)
+def remove_skill(
     skill_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),

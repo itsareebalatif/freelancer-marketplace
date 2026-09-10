@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -25,7 +26,12 @@ def get_current_user(
         logger.warning("Rejected access token: %s", exc)
         raise UnauthorizedError("Invalid or expired access token", code="INVALID_ACCESS_TOKEN")
 
-    user = UserRepository(db).get_by_id(payload["sub"])
+    try:
+        user_id = uuid.UUID(payload["sub"])
+    except (KeyError, ValueError, TypeError):
+        raise UnauthorizedError("Invalid or expired access token", code="INVALID_ACCESS_TOKEN")
+
+    user = UserRepository(db).get_by_id(user_id)
     if user is None:
         logger.warning("Access token valid but user %s no longer exists", payload["sub"])
         raise UnauthorizedError("User no longer exists", code="USER_NOT_FOUND")
