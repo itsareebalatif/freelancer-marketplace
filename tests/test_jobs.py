@@ -63,7 +63,7 @@ def test_list_jobs_only_shows_published(client, client_auth_headers):
         json={"title": "Published Job", "description": "Ready to go", "budget": "100.00"},
         headers=client_auth_headers,
     ).json()
-    client.post(f"/jobs/{published['id']}/publish", headers=client_auth_headers)
+    client.patch(f"/jobs/{published['id']}", json={"status": "PUBLISHED"}, headers=client_auth_headers)
 
     response = client.get("/jobs")
     titles = [job["title"] for job in response.json()["items"]]

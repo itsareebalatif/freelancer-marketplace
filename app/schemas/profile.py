@@ -22,6 +22,7 @@ class FreelancerProfileCreate(BaseModel):
     hourly_rate: Optional[Decimal] = None
     experience_years: int = 0
     availability: str = "Available"
+    skill_ids: Optional[list[uuid.UUID]] = None
 
 
 class FreelancerProfileUpdate(BaseModel):
@@ -29,6 +30,7 @@ class FreelancerProfileUpdate(BaseModel):
     hourly_rate: Optional[Decimal] = None
     experience_years: Optional[int] = None
     availability: Optional[str] = None
+    skill_ids: Optional[list[uuid.UUID]] = None
 
 
 class FreelancerProfileOut(BaseModel):

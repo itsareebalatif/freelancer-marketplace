@@ -62,12 +62,7 @@ def get_proposal(db: Session, user: User, proposal_id) -> Proposal:
     return proposal
 
 
-def reject_proposal(db: Session, client: User, proposal_id) -> Proposal:
-    proposal = ProposalRepository(db).get_by_id(proposal_id)
-    if proposal is None:
-        raise NotFoundError("Proposal not found", code="PROPOSAL_NOT_FOUND")
-
-    job = JobRepository(db).get_by_id(proposal.job_id)
+def _reject_proposal(db: Session, client: User, proposal: Proposal, job) -> Proposal:
     if job is None or job.client_id != client.id:
         raise ForbiddenError("You don't own this job", code="NOT_JOB_OWNER")
 
@@ -81,12 +76,7 @@ def reject_proposal(db: Session, client: User, proposal_id) -> Proposal:
     return proposal
 
 
-def accept_proposal(db: Session, client: User, proposal_id) -> Proposal:
-    proposal = ProposalRepository(db).get_by_id(proposal_id)
-    if proposal is None:
-        raise NotFoundError("Proposal not found", code="PROPOSAL_NOT_FOUND")
-
-    job = JobRepository(db).get_by_id(proposal.job_id)
+def _accept_proposal(db: Session, client: User, proposal: Proposal, job) -> Proposal:
     if job is None or job.client_id != client.id:
         raise ForbiddenError("You don't own this job", code="NOT_JOB_OWNER")
 
@@ -133,3 +123,25 @@ def accept_proposal(db: Session, client: User, proposal_id) -> Proposal:
         len(other_pending),
     )
     return proposal
+
+
+def update_proposal(db: Session, client: User, proposal_id, data) -> Proposal:
+    proposal = ProposalRepository(db).get_by_id(proposal_id)
+    if proposal is None:
+        raise NotFoundError("Proposal not found", code="PROPOSAL_NOT_FOUND")
+
+    job = JobRepository(db).get_by_id(proposal.job_id)
+
+    new_status = data.model_dump(exclude_unset=True).get("status")
+    if new_status is None:
+        raise ConflictError("Nothing to update — pass a status", code="NO_CHANGES")
+
+    if new_status == ProposalStatus.ACCEPTED:
+        return _accept_proposal(db, client, proposal, job)
+
+    if new_status == ProposalStatus.REJECTED:
+        return _reject_proposal(db, client, proposal, job)
+
+    raise ConflictError(
+        "Status can only be set to ACCEPTED or REJECTED", code="STATUS_NOT_CLIENT_SETTABLE"
+    )

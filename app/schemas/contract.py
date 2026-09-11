@@ -9,6 +9,10 @@ from app.models.enums import ContractStatus
 from app.schemas.milestone import MilestoneOut
 
 
+class ContractUpdate(BaseModel):
+    status: Optional[ContractStatus] = None
+
+
 class ContractOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

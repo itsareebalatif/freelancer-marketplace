@@ -28,11 +28,7 @@ def get_contract(db: Session, user: User, contract_id) -> Contract:
     return contract
 
 
-def complete_contract(db: Session, user: User, contract_id) -> Contract:
-    contract = ContractRepository(db).get_by_id(contract_id)
-    if contract is None:
-        raise NotFoundError("Contract not found", code="CONTRACT_NOT_FOUND")
-
+def _complete_contract(db: Session, user: User, contract: Contract) -> Contract:
     if contract.client_id != user.id:
         raise ForbiddenError("Only the client can complete this contract", code="NOT_CONTRACT_CLIENT")
 
@@ -54,3 +50,20 @@ def complete_contract(db: Session, user: User, contract_id) -> Contract:
     )
     logger.info("Contract %s completed by client %s", contract.id, user.id)
     return contract
+
+
+def update_contract(db: Session, user: User, contract_id, data) -> Contract:
+    contract = ContractRepository(db).get_by_id(contract_id)
+    if contract is None:
+        raise NotFoundError("Contract not found", code="CONTRACT_NOT_FOUND")
+
+    new_status = data.model_dump(exclude_unset=True).get("status")
+    if new_status is None:
+        raise ConflictError("Nothing to update — pass a status", code="NO_CHANGES")
+
+    if new_status != ContractStatus.COMPLETED:
+        raise ConflictError(
+            "Status can only be set to COMPLETED via this endpoint", code="STATUS_NOT_CLIENT_SETTABLE"
+        )
+
+    return _complete_contract(db, user, contract)

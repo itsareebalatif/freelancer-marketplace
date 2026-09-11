@@ -14,6 +14,7 @@ from app.repositories.user_repo import UserRepository
 logger = logging.getLogger(__name__)
 
 bearer_scheme = HTTPBearer()
+bearer_scheme_optional = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
@@ -36,6 +37,15 @@ def get_current_user(
         logger.warning("Access token valid but user %s no longer exists", payload["sub"])
         raise UnauthorizedError("User no longer exists", code="USER_NOT_FOUND")
     return user
+
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme_optional),
+    db: Session = Depends(get_db),
+) -> User | None:
+    if credentials is None:
+        return None
+    return get_current_user(credentials, db)
 
 
 def require_role(role: str):

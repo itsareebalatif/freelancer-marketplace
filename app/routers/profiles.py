@@ -1,5 +1,3 @@
-import uuid
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -39,21 +37,3 @@ def update_profile(
     current_user: User = Depends(require_freelancer),
 ):
     return profile_service.update_profile(db, current_user, data)
-
-
-@router.post("/skills/{skill_id}", response_model=FreelancerProfileOut)
-def add_skill(
-    skill_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_freelancer),
-):
-    return profile_service.add_skill(db, current_user, skill_id)
-
-
-@router.delete("/skills/{skill_id}", response_model=FreelancerProfileOut)
-def remove_skill(
-    skill_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_freelancer),
-):
-    return profile_service.remove_skill(db, current_user, skill_id)

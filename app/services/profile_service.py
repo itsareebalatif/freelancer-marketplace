@@ -12,13 +12,28 @@ from app.schemas.profile import FreelancerProfileCreate, FreelancerProfileUpdate
 logger = logging.getLogger(__name__)
 
 
+def _resolve_skills(db: Session, skill_ids: list) -> list:
+    skills = []
+    for skill_id in skill_ids:
+        skill = SkillRepository(db).get_by_id(skill_id)
+        if skill is None:
+            raise NotFoundError(f"Skill {skill_id} not found", code="SKILL_NOT_FOUND")
+        skills.append(skill)
+    return skills
+
+
 def create_profile(db: Session, user: User, data: FreelancerProfileCreate) -> FreelancerProfile:
     profiles = ProfileRepository(db)
     if profiles.get_by_user_id(user.id) is not None:
         logger.warning("Profile creation rejected — user %s already has one", user.id)
         raise ConflictError("You already have a freelancer profile", code="PROFILE_ALREADY_EXISTS")
 
-    profile = profiles.create(user_id=user.id, **data.model_dump())
+    fields = data.model_dump(exclude={"skill_ids"})
+    profile = profiles.create(user_id=user.id, **fields)
+
+    if data.skill_ids:
+        profile = profiles.set_skills(profile, _resolve_skills(db, data.skill_ids))
+
     logger.info("Freelancer profile created for user %s", user.id)
     return profile
 
@@ -37,28 +52,14 @@ def get_my_profile(db: Session, user: User) -> FreelancerProfile:
 def update_profile(db: Session, user: User, data: FreelancerProfileUpdate) -> FreelancerProfile:
     profile = _get_owned_profile(db, user)
     changes = data.model_dump(exclude_unset=True)
-    profile = ProfileRepository(db).update(profile, **changes)
-    logger.info("Freelancer profile updated for user %s: %s", user.id, list(changes.keys()))
-    return profile
+    skill_ids = changes.pop("skill_ids", None)
 
+    if changes:
+        profile = ProfileRepository(db).update(profile, **changes)
+        logger.info("Freelancer profile updated for user %s: %s", user.id, list(changes.keys()))
 
-def add_skill(db: Session, user: User, skill_id) -> FreelancerProfile:
-    profile = _get_owned_profile(db, user)
-    skill = SkillRepository(db).get_by_id(skill_id)
-    if skill is None:
-        raise NotFoundError("Skill not found", code="SKILL_NOT_FOUND")
+    if skill_ids is not None:
+        profile = ProfileRepository(db).set_skills(profile, _resolve_skills(db, skill_ids))
+        logger.info("Freelancer profile skills set to %s for user %s", skill_ids, user.id)
 
-    profile = ProfileRepository(db).add_skill(profile, skill)
-    logger.info("Skill %s added to profile of user %s", skill_id, user.id)
-    return profile
-
-
-def remove_skill(db: Session, user: User, skill_id) -> FreelancerProfile:
-    profile = _get_owned_profile(db, user)
-    skill = SkillRepository(db).get_by_id(skill_id)
-    if skill is None:
-        raise NotFoundError("Skill not found", code="SKILL_NOT_FOUND")
-
-    profile = ProfileRepository(db).remove_skill(profile, skill)
-    logger.info("Skill %s removed from profile of user %s", skill_id, user.id)
     return profile

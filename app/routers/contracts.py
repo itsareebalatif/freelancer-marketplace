@@ -8,7 +8,7 @@ from app.dependencies import get_current_user, require_role
 from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.common import PaginatedResponse
-from app.schemas.contract import ContractOut
+from app.schemas.contract import ContractOut, ContractUpdate
 from app.schemas.milestone import MilestoneCreate, MilestoneOut
 from app.services import contract_service, milestone_service
 
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/contracts", tags=["contracts"])
 require_client = require_role(UserRole.CLIENT)
 
 
-@router.get("/mine", response_model=PaginatedResponse[ContractOut])
-def list_my_contracts(
+@router.get("", response_model=PaginatedResponse[ContractOut])
+def list_contracts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     page: int = Query(1, ge=1),
@@ -37,13 +37,14 @@ def get_contract(
     return contract_service.get_contract(db, current_user, contract_id)
 
 
-@router.post("/{contract_id}/complete", response_model=ContractOut)
-def complete_contract(
+@router.patch("/{contract_id}", response_model=ContractOut)
+def update_contract(
     contract_id: uuid.UUID,
+    data: ContractUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_client),
 ):
-    return contract_service.complete_contract(db, current_user, contract_id)
+    return contract_service.update_contract(db, current_user, contract_id, data)
 
 
 @router.post("/{contract_id}/milestones", response_model=MilestoneOut, status_code=status.HTTP_201_CREATED)

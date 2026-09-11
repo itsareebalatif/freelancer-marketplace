@@ -14,6 +14,10 @@ class MilestoneCreate(BaseModel):
     deadline: Optional[datetime] = None
 
 
+class MilestoneUpdate(BaseModel):
+    status: Optional[MilestoneStatus] = None
+
+
 class MilestoneOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

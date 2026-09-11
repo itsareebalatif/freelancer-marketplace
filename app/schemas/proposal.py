@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -11,6 +12,10 @@ class ProposalCreate(BaseModel):
     cover_letter: str
     bid_amount: Decimal
     estimated_duration: str
+
+
+class ProposalUpdate(BaseModel):
+    status: Optional[ProposalStatus] = None
 
 
 class ProposalOut(BaseModel):

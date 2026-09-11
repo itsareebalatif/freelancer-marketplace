@@ -36,13 +36,15 @@ def test_full_milestone_lifecycle(client, active_contract, client_auth_headers, 
     contract_id = active_contract["contract"]["id"]
     milestone = _create_milestone(client, contract_id, client_auth_headers)
 
-    submitted = client.post(
-        f"/milestones/{milestone['id']}/submit", headers=freelancer_auth_headers
+    submitted = client.patch(
+        f"/milestones/{milestone['id']}", json={"status": "SUBMITTED"}, headers=freelancer_auth_headers
     )
     assert submitted.status_code == 200
     assert submitted.json()["status"] == "SUBMITTED"
 
-    approved = client.post(f"/milestones/{milestone['id']}/approve", headers=client_auth_headers)
+    approved = client.patch(
+        f"/milestones/{milestone['id']}", json={"status": "APPROVED"}, headers=client_auth_headers
+    )
     assert approved.status_code == 200
     assert approved.json()["status"] == "APPROVED"
 
@@ -53,7 +55,9 @@ def test_cannot_approve_a_milestone_that_was_never_submitted(
     contract_id = active_contract["contract"]["id"]
     milestone = _create_milestone(client, contract_id, client_auth_headers)
 
-    response = client.post(f"/milestones/{milestone['id']}/approve", headers=client_auth_headers)
+    response = client.patch(
+        f"/milestones/{milestone['id']}", json={"status": "APPROVED"}, headers=client_auth_headers
+    )
     assert response.status_code == 409
 
 

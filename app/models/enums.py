@@ -26,3 +26,23 @@ class MilestoneStatus(str, enum.Enum):
     SUBMITTED="SUBMITTED"
     APPROVED="APPROVED"
     REJECTED="REJECTED"
+
+class BudgetType(str, enum.Enum):
+    FIXED="FIXED"
+    HOURLY="HOURLY"
+
+class ExperienceLevel(str, enum.Enum):
+    ENTRY="ENTRY"
+    INTERMEDIATE="INTERMEDIATE"
+    EXPERT="EXPERT"
+
+class JobDuration(str, enum.Enum):
+    LESS_THAN_1_MONTH="LESS_THAN_1_MONTH"
+    ONE_TO_3_MONTHS="ONE_TO_3_MONTHS"
+    THREE_TO_6_MONTHS="THREE_TO_6_MONTHS"
+    MORE_THAN_6_MONTHS="MORE_THAN_6_MONTHS"
+
+class LocationType(str, enum.Enum):
+    REMOTE="REMOTE"
+    ONSITE="ONSITE"
+    HYBRID="HYBRID"

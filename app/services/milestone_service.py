@@ -50,8 +50,7 @@ def get_milestone(db: Session, user: User, milestone_id) -> Milestone:
     return milestone
 
 
-def submit_milestone(db: Session, user: User, milestone_id) -> Milestone:
-    milestone, contract = _get_visible_milestone(db, user, milestone_id)
+def _submit_milestone(db: Session, user: User, milestone: Milestone, contract) -> Milestone:
     if contract.freelancer_id != user.id:
         raise ForbiddenError(
             "Only the assigned freelancer can submit this milestone", code="NOT_CONTRACT_FREELANCER"
@@ -70,8 +69,9 @@ def submit_milestone(db: Session, user: User, milestone_id) -> Milestone:
     return milestone
 
 
-def _client_review_milestone(db: Session, user: User, milestone_id, new_status: MilestoneStatus) -> Milestone:
-    milestone, contract = _get_visible_milestone(db, user, milestone_id)
+def _client_review_milestone(
+    db: Session, user: User, milestone: Milestone, contract, new_status: MilestoneStatus
+) -> Milestone:
     if contract.client_id != user.id:
         raise ForbiddenError("Only the client can review this milestone", code="NOT_CONTRACT_CLIENT")
 
@@ -88,9 +88,19 @@ def _client_review_milestone(db: Session, user: User, milestone_id, new_status: 
     return milestone
 
 
-def approve_milestone(db: Session, user: User, milestone_id) -> Milestone:
-    return _client_review_milestone(db, user, milestone_id, MilestoneStatus.APPROVED)
+def update_milestone(db: Session, user: User, milestone_id, data) -> Milestone:
+    milestone, contract = _get_visible_milestone(db, user, milestone_id)
 
+    new_status = data.model_dump(exclude_unset=True).get("status")
+    if new_status is None:
+        raise ConflictError("Nothing to update — pass a status", code="NO_CHANGES")
 
-def reject_milestone(db: Session, user: User, milestone_id) -> Milestone:
-    return _client_review_milestone(db, user, milestone_id, MilestoneStatus.REJECTED)
+    if new_status == MilestoneStatus.SUBMITTED:
+        return _submit_milestone(db, user, milestone, contract)
+
+    if new_status in (MilestoneStatus.APPROVED, MilestoneStatus.REJECTED):
+        return _client_review_milestone(db, user, milestone, contract, new_status)
+
+    raise ConflictError(
+        "Status can only be set to SUBMITTED, APPROVED, or REJECTED", code="STATUS_NOT_CLIENT_SETTABLE"
+    )

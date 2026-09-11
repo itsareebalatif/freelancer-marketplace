@@ -101,16 +101,16 @@ def active_contract(client, client_auth_headers, freelancer_auth_headers):
         json={"title": "Build a website", "description": "Simple landing page", "budget": "500.00"},
         headers=client_auth_headers,
     ).json()
-    client.post(f"/jobs/{job['id']}/publish", headers=client_auth_headers)
+    client.patch(f"/jobs/{job['id']}", json={"status": "PUBLISHED"}, headers=client_auth_headers)
 
     proposal = client.post(
         f"/jobs/{job['id']}/proposals",
         json={"cover_letter": "I can do this", "bid_amount": "500.00", "estimated_duration": "2 weeks"},
         headers=freelancer_auth_headers,
     ).json()
-    client.post(f"/proposals/{proposal['id']}/accept", headers=client_auth_headers)
+    client.patch(f"/proposals/{proposal['id']}", json={"status": "ACCEPTED"}, headers=client_auth_headers)
 
-    contracts = client.get("/contracts/mine", headers=client_auth_headers).json()["items"]
+    contracts = client.get("/contracts", headers=client_auth_headers).json()["items"]
     contract = next(c for c in contracts if c["proposal_id"] == proposal["id"])
 
     return {"job": job, "proposal": proposal, "contract": contract}

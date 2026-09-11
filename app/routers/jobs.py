@@ -4,9 +4,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import ForbiddenError, UnauthorizedError
 from app.db.Session import get_db
-from app.dependencies import require_role
-from app.models.enums import UserRole
+from app.dependencies import get_current_user_optional, require_role
+from app.models.enums import BudgetType, ExperienceLevel, JobStatus, LocationType, UserRole
 from app.models.user import User
 from app.schemas.common import PaginatedResponse
 from app.schemas.job import JobCreate, JobOut, JobUpdate
@@ -29,26 +30,44 @@ def create_job(
 @router.get("", response_model=PaginatedResponse[JobOut])
 def list_jobs(
     db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    mine: bool = False,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
     skill_id: Optional[uuid.UUID] = None,
+    category: Optional[str] = None,
+    budget_type: Optional[BudgetType] = None,
+    experience_level: Optional[ExperienceLevel] = None,
+    location_type: Optional[LocationType] = None,
+    status_filter: Optional[JobStatus] = Query(None, alias="status"),
     sort_by: str = Query("newest", pattern="^(newest|budget_asc|budget_desc)$"),
 ):
+    if mine:
+        if current_user is None:
+            raise UnauthorizedError("Authentication required", code="NOT_AUTHENTICATED")
+        if current_user.role != UserRole.CLIENT:
+            raise ForbiddenError("This action requires the client role", code="ROLE_NOT_ALLOWED")
+        items, total = job_service.list_my_jobs(
+            db, current_user, page=page, page_size=page_size, status=status_filter
+        )
+        return PaginatedResponse(items=items, total=total, page=page, page_size=page_size)
+
+    # Public browse always stays locked to PUBLISHED jobs — a `status` filter here
+    # is ignored rather than honored, since exposing other clients' DRAFT/CLOSED
+    # jobs to anonymous visitors would be a data leak, not a feature.
     items, total = job_service.list_jobs(
-        db, page=page, page_size=page_size, search=search, skill_id=skill_id, sort_by=sort_by
+        db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        skill_id=skill_id,
+        category=category,
+        budget_type=budget_type,
+        experience_level=experience_level,
+        location_type=location_type,
+        sort_by=sort_by,
     )
-    return PaginatedResponse(items=items, total=total, page=page, page_size=page_size)
-
-
-@router.get("/mine", response_model=PaginatedResponse[JobOut])
-def list_my_jobs(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_client),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-):
-    items, total = job_service.list_my_jobs(db, current_user, page=page, page_size=page_size)
     return PaginatedResponse(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -65,41 +84,3 @@ def update_job(
     current_user: User = Depends(require_client),
 ):
     return job_service.update_job(db, current_user, job_id, data)
-
-
-@router.post("/{job_id}/publish", response_model=JobOut)
-def publish_job(
-    job_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_client),
-):
-    return job_service.publish_job(db, current_user, job_id)
-
-
-@router.post("/{job_id}/close", response_model=JobOut)
-def close_job(
-    job_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_client),
-):
-    return job_service.close_job(db, current_user, job_id)
-
-
-@router.post("/{job_id}/skills/{skill_id}", response_model=JobOut)
-def add_job_skill(
-    job_id: uuid.UUID,
-    skill_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_client),
-):
-    return job_service.add_skill(db, current_user, job_id, skill_id)
-
-
-@router.delete("/{job_id}/skills/{skill_id}", response_model=JobOut)
-def remove_job_skill(
-    job_id: uuid.UUID,
-    skill_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_client),
-):
-    return job_service.remove_skill(db, current_user, job_id, skill_id)

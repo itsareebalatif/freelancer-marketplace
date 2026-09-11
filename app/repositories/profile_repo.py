@@ -17,16 +17,8 @@ class ProfileRepository(BaseRepository):
         self.db.refresh(profile)
         return profile
 
-    def add_skill(self, profile: FreelancerProfile, skill: Skill) -> FreelancerProfile:
-        if skill not in profile.skills:
-            profile.skills.append(skill)
-            self.db.commit()
-            self.db.refresh(profile)
-        return profile
-
-    def remove_skill(self, profile: FreelancerProfile, skill: Skill) -> FreelancerProfile:
-        if skill in profile.skills:
-            profile.skills.remove(skill)
-            self.db.commit()
-            self.db.refresh(profile)
+    def set_skills(self, profile: FreelancerProfile, skills: list[Skill]) -> FreelancerProfile:
+        profile.skills = skills
+        self.db.commit()
+        self.db.refresh(profile)
         return profile

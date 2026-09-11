@@ -4,7 +4,7 @@ def _publish_job(client, client_auth_headers):
         json={"title": "Build a website", "description": "Simple landing page", "budget": "500.00"},
         headers=client_auth_headers,
     ).json()
-    client.post(f"/jobs/{job['id']}/publish", headers=client_auth_headers)
+    client.patch(f"/jobs/{job['id']}", json={"status": "PUBLISHED"}, headers=client_auth_headers)
     return job
 
 
@@ -57,9 +57,9 @@ def test_only_job_owner_can_view_its_proposals(client, client_auth_headers, free
         headers=freelancer_auth_headers,
     )
 
-    response = client.get(f"/jobs/{job['id']}/proposals", headers=freelancer_auth_headers)
+    response = client.get(f"/proposals?job_id={job['id']}", headers=freelancer_auth_headers)
     assert response.status_code == 403
 
-    response = client.get(f"/jobs/{job['id']}/proposals", headers=client_auth_headers)
+    response = client.get(f"/proposals?job_id={job['id']}", headers=client_auth_headers)
     assert response.status_code == 200
     assert response.json()["total"] == 1
