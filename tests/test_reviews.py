@@ -6,9 +6,9 @@ def _complete_contract(client, active_contract, client_auth_headers, freelancer_
         headers=client_auth_headers,
     ).json()
 
-    client.post(f"/milestones/{milestone['id']}/submit", headers=freelancer_auth_headers)
-    client.post(f"/milestones/{milestone['id']}/approve", headers=client_auth_headers)
-    client.post(f"/contracts/{contract_id}/complete", headers=client_auth_headers)
+    client.patch(f"/milestones/{milestone['id']}", json={"status": "SUBMITTED"}, headers=freelancer_auth_headers)
+    client.patch(f"/milestones/{milestone['id']}", json={"status": "APPROVED"}, headers=client_auth_headers)
+    client.patch(f"/contracts/{contract_id}", json={"status": "COMPLETED"}, headers=client_auth_headers)
 
     return contract_id
 

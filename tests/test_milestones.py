@@ -67,9 +67,11 @@ def test_completing_contract_after_all_milestones_approved(
     contract_id = active_contract["contract"]["id"]
     milestone = _create_milestone(client, contract_id, client_auth_headers)
 
-    client.post(f"/milestones/{milestone['id']}/submit", headers=freelancer_auth_headers)
-    client.post(f"/milestones/{milestone['id']}/approve", headers=client_auth_headers)
+    client.patch(f"/milestones/{milestone['id']}", json={"status": "SUBMITTED"}, headers=freelancer_auth_headers)
+    client.patch(f"/milestones/{milestone['id']}", json={"status": "APPROVED"}, headers=client_auth_headers)
 
-    response = client.post(f"/contracts/{contract_id}/complete", headers=client_auth_headers)
+    response = client.patch(
+        f"/contracts/{contract_id}", json={"status": "COMPLETED"}, headers=client_auth_headers
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "COMPLETED"
