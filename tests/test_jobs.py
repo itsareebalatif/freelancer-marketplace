@@ -65,7 +65,7 @@ def test_list_jobs_only_shows_published(client, client_auth_headers):
     ).json()
     client.patch(f"/jobs/{published['id']}", json={"status": "PUBLISHED"}, headers=client_auth_headers)
 
-    response = client.get("/jobs")
+    response = client.post("/jobs/search", json={})
     titles = [job["title"] for job in response.json()["items"]]
 
     assert "Published Job" in titles

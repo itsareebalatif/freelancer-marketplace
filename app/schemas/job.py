@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import BudgetType, ExperienceLevel, JobDuration, JobStatus, LocationType
 from app.schemas.profile import SkillOut
@@ -19,6 +19,18 @@ class JobCreate(BaseModel):
     location_type: LocationType = LocationType.REMOTE
     category: Optional[str] = None
     deadline: Optional[datetime] = None
+
+
+class JobSearchFilters(BaseModel):
+    mine: bool = False
+    skill_id: Optional[uuid.UUID] = None
+    category: Optional[str] = None
+    budget_type: Optional[BudgetType] = None
+    experience_level: Optional[ExperienceLevel] = None
+    location_type: Optional[LocationType] = None
+    sort_by: str = Field("newest", pattern="^(newest|budget_asc|budget_desc)$")
+    page: int = Field(1, ge=1)
+    page_size: int = Field(20, ge=1, le=100)
 
 
 class JobUpdate(BaseModel):
