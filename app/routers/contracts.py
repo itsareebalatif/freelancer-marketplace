@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db.Session import get_db
@@ -55,3 +55,13 @@ def create_milestone(
     current_user: User = Depends(require_client),
 ):
     return milestone_service.create_milestone(db, current_user, contract_id, data)
+
+
+@router.post("/{contract_id}/document", response_model=ContractOut)
+def upload_contract_document(
+    contract_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return contract_service.upload_document(db, current_user, contract_id, file)

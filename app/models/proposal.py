@@ -1,12 +1,20 @@
 import uuid
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 from sqlalchemy import String, Text, Numeric, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
 from app.models.enums import ProposalStatus
+
+
+class ProposalSkill(Base):
+    __tablename__ = "proposal_skills"
+
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), primary_key=True)
+    skill_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True)
+
 
 class Proposal(Base, TimestampMixin):
     __tablename__ = "proposals"
@@ -30,3 +38,4 @@ class Proposal(Base, TimestampMixin):
     job: Mapped["Job"] = relationship(back_populates="proposals")
     freelancer: Mapped["User"] = relationship(back_populates="proposals")
     contract: Mapped[Optional["Contract"]] = relationship(back_populates="proposal", uselist=False)
+    skills: Mapped[List["Skill"]] = relationship(secondary="proposal_skills", back_populates="proposals")

@@ -65,6 +65,38 @@ def test_only_client_can_complete_contract(client, active_contract, freelancer_a
     assert response.status_code == 403
 
 
+def test_participant_can_upload_contract_document(client, active_contract, client_auth_headers):
+    contract_id = active_contract["contract"]["id"]
+
+    response = client.post(
+        f"/contracts/{contract_id}/document",
+        files={"file": ("agreement.pdf", b"fake-pdf-bytes", "application/pdf")},
+        headers=client_auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["document_url"].startswith("/uploads/contracts/")
+
+
+def test_non_participant_cannot_upload_contract_document(client, active_contract):
+    contract_id = active_contract["contract"]["id"]
+
+    client.post(
+        "/auth/register",
+        json={"email": "outsider@example.com", "password": "password123", "role": "CLIENT"},
+    )
+    login = client.post("/auth/login", json={"email": "outsider@example.com", "password": "password123"})
+    outsider_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    response = client.post(
+        f"/contracts/{contract_id}/document",
+        files={"file": ("agreement.pdf", b"fake-pdf-bytes", "application/pdf")},
+        headers=outsider_headers,
+    )
+
+    assert response.status_code == 403
+
+
 def test_contract_cannot_complete_with_incomplete_milestones(client, active_contract, client_auth_headers):
     contract_id = active_contract["contract"]["id"]
     client.post(

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from app.core.storage import ALLOWED_DOCUMENT_TYPES, save_upload
 from app.models.contract import Contract
 from app.models.enums import ContractStatus, MilestoneStatus
 from app.models.user import User
@@ -67,3 +68,11 @@ def update_contract(db: Session, user: User, contract_id, data) -> Contract:
         )
 
     return _complete_contract(db, user, contract)
+
+
+def upload_document(db: Session, user: User, contract_id, file) -> Contract:
+    contract = get_contract(db, user, contract_id)
+    document_url = save_upload(file, "contracts", ALLOWED_DOCUMENT_TYPES)
+    contract = ContractRepository(db).update(contract, document_url=document_url)
+    logger.info("Document uploaded for contract %s by user %s", contract.id, user.id)
+    return contract

@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, NotFoundError
+from app.core.storage import ALLOWED_IMAGE_TYPES, save_upload
 from app.models.profile import FreelancerProfile
 from app.models.user import User
 from app.repositories.profile_repo import ProfileRepository
@@ -62,4 +63,12 @@ def update_profile(db: Session, user: User, data: FreelancerProfileUpdate) -> Fr
         profile = ProfileRepository(db).set_skills(profile, _resolve_skills(db, skill_ids))
         logger.info("Freelancer profile skills set to %s for user %s", skill_ids, user.id)
 
+    return profile
+
+
+def upload_avatar(db: Session, user: User, file) -> FreelancerProfile:
+    profile = _get_owned_profile(db, user)
+    avatar_url = save_upload(file, "avatars", ALLOWED_IMAGE_TYPES)
+    profile = ProfileRepository(db).update(profile, avatar_url=avatar_url)
+    logger.info("Avatar uploaded for user %s", user.id)
     return profile

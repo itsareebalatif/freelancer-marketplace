@@ -9,9 +9,20 @@ from app.models.proposal import Proposal
 from app.models.user import User
 from app.repositories.job_repo import JobRepository
 from app.repositories.proposal_repo import ProposalRepository
+from app.repositories.skill_repo import SkillRepository
 from app.schemas.proposal import ProposalCreate
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_skills(db: Session, skill_ids: list) -> list:
+    skills = []
+    for skill_id in skill_ids:
+        skill = SkillRepository(db).get_by_id(skill_id)
+        if skill is None:
+            raise NotFoundError(f"Skill {skill_id} not found", code="SKILL_NOT_FOUND")
+        skills.append(skill)
+    return skills
 
 
 def submit_proposal(db: Session, freelancer: User, job_id, data: ProposalCreate) -> Proposal:
@@ -29,7 +40,12 @@ def submit_proposal(db: Session, freelancer: User, job_id, data: ProposalCreate)
     if proposals.get_by_job_and_freelancer(job_id, freelancer.id) is not None:
         raise ConflictError("You already submitted a proposal for this job", code="DUPLICATE_PROPOSAL")
 
-    proposal = proposals.create(job_id=job_id, freelancer_id=freelancer.id, **data.model_dump())
+    fields = data.model_dump(exclude={"skill_ids"})
+    proposal = proposals.create(job_id=job_id, freelancer_id=freelancer.id, **fields)
+
+    if data.skill_ids:
+        proposal = proposals.set_skills(proposal, _resolve_skills(db, data.skill_ids))
+
     logger.info("Proposal %s submitted by freelancer %s for job %s", proposal.id, freelancer.id, job_id)
     return proposal
 

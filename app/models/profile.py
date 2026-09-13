@@ -15,6 +15,7 @@ class Skill(Base):
 
     profiles: Mapped[List["FreelancerProfile"]] = relationship(secondary="freelancer_skills", back_populates="skills")
     jobs: Mapped[List["Job"]] = relationship(secondary="job_skills", back_populates="skills")
+    proposals: Mapped[List["Proposal"]] = relationship(secondary="proposal_skills", back_populates="skills")
 
 
 class FreelancerSkill(Base):
@@ -33,6 +34,7 @@ class FreelancerProfile(Base, TimestampMixin):
     hourly_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     experience_years: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     availability: Mapped[str] = mapped_column(String(50), default="Available", nullable=False)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="profile")
     skills: Mapped[List["Skill"]] = relationship(secondary="freelancer_skills", back_populates="profiles")
