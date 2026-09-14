@@ -74,8 +74,8 @@ def test_participant_can_upload_contract_document(client, active_contract, clien
         headers=client_auth_headers,
     )
 
-    assert response.status_code == 200
-    assert response.json()["document_url"].startswith("/uploads/contracts/")
+    assert response.status_code == 201
+    assert response.json()["original_filename"] == "agreement.pdf"
 
 
 def test_non_participant_cannot_upload_contract_document(client, active_contract):

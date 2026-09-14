@@ -126,3 +126,62 @@ def test_test_endpoint_disabled_in_production(client, client_auth_headers, monke
     response = client.post("/api/notifications/test", headers=client_auth_headers)
 
     assert response.status_code == 403
+
+
+class _FakeProviderError(Exception):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(f"provider error {code}")
+
+
+def test_temporary_failure_is_retried_and_eventually_succeeds(client, monkeypatch):
+    calls = []
+
+    def flaky_send_email(*, to, subject, body):
+        calls.append(1)
+        if len(calls) < 3:
+            raise _FakeProviderError(500)
+
+    monkeypatch.setattr(notification_service, "send_email", flaky_send_email)
+
+    client.post(
+        "/auth/register",
+        json={"email": "retrycase@example.com", "password": "password123", "role": "CLIENT"},
+    )
+    token = client.post(
+        "/auth/login", json={"email": "retrycase@example.com", "password": "password123"}
+    ).json()["access_token"]
+
+    notifications = client.get(
+        "/api/notifications", headers={"Authorization": f"Bearer {token}"}
+    ).json()["items"]
+
+    assert len(calls) == 3
+    assert notifications[0]["status"] == "SENT"
+    assert notifications[0]["attempt_count"] == 3
+
+
+def test_permanent_failure_is_not_retried(client, monkeypatch):
+    calls = []
+
+    def rejecting_send_email(*, to, subject, body):
+        calls.append(1)
+        raise _FakeProviderError(422)
+
+    monkeypatch.setattr(notification_service, "send_email", rejecting_send_email)
+
+    client.post(
+        "/auth/register",
+        json={"email": "permanentfail@example.com", "password": "password123", "role": "CLIENT"},
+    )
+    token = client.post(
+        "/auth/login", json={"email": "permanentfail@example.com", "password": "password123"}
+    ).json()["access_token"]
+
+    notifications = client.get(
+        "/api/notifications", headers={"Authorization": f"Bearer {token}"}
+    ).json()["items"]
+
+    assert len(calls) == 1
+    assert notifications[0]["status"] == "FAILED"
+    assert notifications[0]["attempt_count"] == 1

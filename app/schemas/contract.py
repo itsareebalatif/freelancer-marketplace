@@ -23,6 +23,5 @@ class ContractOut(BaseModel):
     total_amount: Decimal
     status: ContractStatus
     completed_at: Optional[datetime]
-    document_url: Optional[str]
     milestones: list[MilestoneOut]
     created_at: datetime

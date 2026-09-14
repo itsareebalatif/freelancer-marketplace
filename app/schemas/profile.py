@@ -42,6 +42,6 @@ class FreelancerProfileOut(BaseModel):
     hourly_rate: Optional[Decimal]
     experience_years: int
     availability: str
-    avatar_url: Optional[str]
+    avatar_attachment_id: Optional[uuid.UUID]
     skills: list[SkillOut]
     created_at: datetime

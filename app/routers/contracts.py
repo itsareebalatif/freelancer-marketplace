@@ -7,6 +7,7 @@ from app.db.Session import get_db
 from app.dependencies import get_current_user, require_role
 from app.models.enums import UserRole
 from app.models.user import User
+from app.schemas.attachment import AttachmentOut
 from app.schemas.common import PaginatedResponse
 from app.schemas.contract import ContractOut, ContractUpdate
 from app.schemas.milestone import MilestoneCreate, MilestoneOut
@@ -58,7 +59,7 @@ def create_milestone(
     return milestone_service.create_milestone(db, current_user, contract_id, data)
 
 
-@router.post("/{contract_id}/document", response_model=ContractOut)
+@router.post("/{contract_id}/document", response_model=AttachmentOut, status_code=status.HTTP_201_CREATED)
 def upload_contract_document(
     contract_id: uuid.UUID,
     file: UploadFile = File(...),

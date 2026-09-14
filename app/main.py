@@ -2,20 +2,26 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 from app.core.exceptions import AppError
 from app.core.logging_config import setup_logging
-from app.core.storage import UPLOAD_ROOT
-from app.routers import auth, contracts, jobs, milestones, notifications, profiles, proposals, reviews, skills
+from app.routers import (
+    attachments,
+    auth,
+    contracts,
+    jobs,
+    milestones,
+    notifications,
+    profiles,
+    proposals,
+    reviews,
+    skills,
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Freelancer Marketplace API")
-
-UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_ROOT), name="uploads")
 
 
 @app.exception_handler(AppError)
@@ -46,3 +52,4 @@ app.include_router(contracts.router)
 app.include_router(milestones.router)
 app.include_router(reviews.router)
 app.include_router(notifications.router)
+app.include_router(attachments.router)

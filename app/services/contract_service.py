@@ -5,14 +5,14 @@ from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
-from app.core.storage import ALLOWED_DOCUMENT_TYPES, save_upload
+from app.models.attachment import Attachment
 from app.models.contract import Contract
-from app.models.enums import ContractStatus, MilestoneStatus, NotificationEventType
+from app.models.enums import AttachmentResourceType, ContractStatus, MilestoneStatus, NotificationEventType
 from app.models.user import User
 from app.repositories.contract_repo import ContractRepository
 from app.repositories.milestone_repo import MilestoneRepository
 from app.repositories.user_repo import UserRepository
-from app.services import notification_service
+from app.services import attachment_service, notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,10 @@ def update_contract(
     return _complete_contract(db, user, contract, background_tasks)
 
 
-def upload_document(db: Session, user: User, contract_id, file) -> Contract:
+def upload_document(db: Session, user: User, contract_id, file) -> Attachment:
     contract = get_contract(db, user, contract_id)
-    document_url = save_upload(file, "contracts", ALLOWED_DOCUMENT_TYPES)
-    contract = ContractRepository(db).update(contract, document_url=document_url)
-    logger.info("Document uploaded for contract %s by user %s", contract.id, user.id)
-    return contract
+    attachment = attachment_service.upload_attachment(
+        db, user, AttachmentResourceType.CONTRACT, contract.id, file
+    )
+    logger.info("Document %s uploaded for contract %s by user %s", attachment.id, contract.id, user.id)
+    return attachment

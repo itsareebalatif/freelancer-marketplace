@@ -8,6 +8,7 @@ from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import app.core.supabase_storage as supabase_storage
 import app.models  # noqa: F401
 import app.services.notification_service as notification_service
 from app.db.base import Base
@@ -75,6 +76,29 @@ def mock_email_provider(monkeypatch):
 
     monkeypatch.setattr(notification_service, "send_email", fake_send_email)
     return sent
+
+
+@pytest.fixture(autouse=True)
+def mock_storage(monkeypatch):
+    """Prevent every test from making a real Supabase Storage call; a simple
+    in-memory dict stands in for the bucket."""
+    objects: dict[str, bytes] = {}
+
+    def fake_upload_object(storage_key, content, content_type):
+        objects[storage_key] = content
+
+    def fake_delete_object(storage_key):
+        objects.pop(storage_key, None)
+
+    def fake_create_signed_url(storage_key, expires_in):
+        if storage_key not in objects:
+            raise supabase_storage.StorageError("object not found")
+        return f"https://fake-storage.test/{storage_key}?expires_in={expires_in}"
+
+    monkeypatch.setattr(supabase_storage, "upload_object", fake_upload_object)
+    monkeypatch.setattr(supabase_storage, "delete_object", fake_delete_object)
+    monkeypatch.setattr(supabase_storage, "create_signed_url", fake_create_signed_url)
+    return objects
 
 
 @pytest.fixture()

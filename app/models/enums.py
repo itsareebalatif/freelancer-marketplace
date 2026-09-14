@@ -68,3 +68,10 @@ class NotificationStatus(str, enum.Enum):
     SENT="SENT"
     FAILED="FAILED"
     SKIPPED="SKIPPED"
+
+class AttachmentResourceType(str, enum.Enum):
+    JOB="JOB"
+    PROPOSAL="PROPOSAL"
+    CONTRACT="CONTRACT"
+    MILESTONE="MILESTONE"
+    PROFILE="PROFILE"

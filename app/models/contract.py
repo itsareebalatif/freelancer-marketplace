@@ -23,7 +23,6 @@ class Contract(Base, TimestampMixin):
         nullable=False
     )
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    document_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Relationships
     proposal: Mapped["Proposal"] = relationship(back_populates="contract")

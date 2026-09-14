@@ -6,6 +6,9 @@ class ProfileRepository(BaseRepository):
     def get_by_user_id(self, user_id) -> FreelancerProfile | None:
         return self.db.query(FreelancerProfile).filter(FreelancerProfile.user_id == user_id).first()
 
+    def get_by_id(self, profile_id) -> FreelancerProfile | None:
+        return self.db.query(FreelancerProfile).filter(FreelancerProfile.id == profile_id).first()
+
     def create(self, *, user_id, **fields) -> FreelancerProfile:
         profile = FreelancerProfile(user_id=user_id, **fields)
         return self.add(profile)

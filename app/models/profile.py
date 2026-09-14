@@ -34,7 +34,9 @@ class FreelancerProfile(Base, TimestampMixin):
     hourly_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     experience_years: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     availability: Mapped[str] = mapped_column(String(50), default="Available", nullable=False)
-    avatar_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    avatar_attachment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("attachments.id", ondelete="SET NULL"), nullable=True
+    )
 
     user: Mapped["User"] = relationship(back_populates="profile")
     skills: Mapped[List["Skill"]] = relationship(secondary="freelancer_skills", back_populates="profiles")

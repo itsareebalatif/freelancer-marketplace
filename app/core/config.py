@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     EMAIL_FROM_ADDRESS: str = "onboarding@resend.dev"
 
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    SUPABASE_STORAGE_BUCKET: str = "marketplace-files"
+    SIGNED_URL_EXPIRY_SECONDS: int = 300
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
