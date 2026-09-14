@@ -10,10 +10,12 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.models.enums import NotificationEventType
 from app.models.user import User
 from app.repositories.refresh_token_repo import RefreshTokenRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import LoginRequest, RegisterRequest
+from app.services import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,14 @@ def register(db: Session, data: RegisterRequest) -> User:
         role=data.role,
     )
     logger.info("New user registered: %s (role=%s)", user.id, user.role)
+
+    notification_service.notify(
+        db,
+        user,
+        NotificationEventType.USER_REGISTERED,
+        {"full_name": user.full_name or user.email},
+        resource_id=user.id,
+    )
     return user
 
 

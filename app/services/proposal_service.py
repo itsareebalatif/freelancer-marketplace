@@ -4,13 +4,15 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.models.contract import Contract
-from app.models.enums import JobStatus, ProposalStatus
+from app.models.enums import JobStatus, NotificationEventType, ProposalStatus
 from app.models.proposal import Proposal
 from app.models.user import User
 from app.repositories.job_repo import JobRepository
 from app.repositories.proposal_repo import ProposalRepository
 from app.repositories.skill_repo import SkillRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.proposal import ProposalCreate
+from app.services import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,20 @@ def submit_proposal(db: Session, freelancer: User, job_id, data: ProposalCreate)
         proposal = proposals.set_skills(proposal, _resolve_skills(db, data.skill_ids))
 
     logger.info("Proposal %s submitted by freelancer %s for job %s", proposal.id, freelancer.id, job_id)
+
+    client = UserRepository(db).get_by_id(job.client_id)
+    if client is not None:
+        notification_service.notify(
+            db,
+            client,
+            NotificationEventType.PROPOSAL_RECEIVED,
+            {
+                "client_name": client.full_name or client.email,
+                "freelancer_name": freelancer.full_name or freelancer.email,
+                "job_title": job.title,
+            },
+            resource_id=proposal.id,
+        )
     return proposal
 
 
@@ -89,6 +105,16 @@ def _reject_proposal(db: Session, client: User, proposal: Proposal, job) -> Prop
 
     proposal = ProposalRepository(db).update_status(proposal, ProposalStatus.REJECTED)
     logger.info("Proposal %s rejected by client %s", proposal.id, client.id)
+
+    freelancer = UserRepository(db).get_by_id(proposal.freelancer_id)
+    if freelancer is not None:
+        notification_service.notify(
+            db,
+            freelancer,
+            NotificationEventType.PROPOSAL_REJECTED,
+            {"freelancer_name": freelancer.full_name or freelancer.email, "job_title": job.title},
+            resource_id=proposal.id,
+        )
     return proposal
 
 
@@ -138,6 +164,24 @@ def _accept_proposal(db: Session, client: User, proposal: Proposal, job) -> Prop
         contract.id,
         len(other_pending),
     )
+
+    freelancer = UserRepository(db).get_by_id(proposal.freelancer_id)
+    if freelancer is not None:
+        freelancer_name = freelancer.full_name or freelancer.email
+        notification_service.notify(
+            db,
+            freelancer,
+            NotificationEventType.PROPOSAL_ACCEPTED,
+            {"freelancer_name": freelancer_name, "job_title": job.title},
+            resource_id=proposal.id,
+        )
+        notification_service.notify(
+            db,
+            freelancer,
+            NotificationEventType.CONTRACT_CREATED,
+            {"freelancer_name": freelancer_name, "job_title": job.title},
+            resource_id=contract.id,
+        )
     return proposal
 
 

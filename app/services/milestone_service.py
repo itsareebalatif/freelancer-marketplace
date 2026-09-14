@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.models.contract import Milestone
-from app.models.enums import ContractStatus, MilestoneStatus
+from app.models.enums import ContractStatus, MilestoneStatus, NotificationEventType
 from app.models.user import User
 from app.repositories.contract_repo import ContractRepository
 from app.repositories.milestone_repo import MilestoneRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.milestone import MilestoneCreate
+from app.services import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +68,16 @@ def _submit_milestone(db: Session, user: User, milestone: Milestone, contract) -
 
     milestone = MilestoneRepository(db).update_status(milestone, MilestoneStatus.SUBMITTED)
     logger.info("Milestone %s submitted by freelancer %s", milestone.id, user.id)
+
+    client = UserRepository(db).get_by_id(contract.client_id)
+    if client is not None:
+        notification_service.notify(
+            db,
+            client,
+            NotificationEventType.MILESTONE_SUBMITTED,
+            {"client_name": client.full_name or client.email, "milestone_title": milestone.title},
+            resource_id=milestone.id,
+        )
     return milestone
 
 
@@ -85,6 +97,21 @@ def _client_review_milestone(
 
     milestone = MilestoneRepository(db).update_status(milestone, new_status)
     logger.info("Milestone %s %s by client %s", milestone.id, new_status.value.lower(), user.id)
+
+    freelancer = UserRepository(db).get_by_id(contract.freelancer_id)
+    if freelancer is not None:
+        event_type = (
+            NotificationEventType.MILESTONE_APPROVED
+            if new_status == MilestoneStatus.APPROVED
+            else NotificationEventType.MILESTONE_REJECTED
+        )
+        notification_service.notify(
+            db,
+            freelancer,
+            event_type,
+            {"freelancer_name": freelancer.full_name or freelancer.email, "milestone_title": milestone.title},
+            resource_id=milestone.id,
+        )
     return milestone
 
 

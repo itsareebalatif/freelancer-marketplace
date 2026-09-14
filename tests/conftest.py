@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
+import app.services.notification_service as notification_service
 from app.db.base import Base
 from app.db.Session import get_db
 from app.main import app
@@ -55,6 +56,18 @@ def db_session():
         session.close()
         Base.metadata.drop_all(engine)
         engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def mock_email_provider(monkeypatch):
+    """Prevent every test from making a real Resend API call; records what was sent."""
+    sent = []
+
+    def fake_send_email(*, to, subject, body):
+        sent.append({"to": to, "subject": subject, "body": body})
+
+    monkeypatch.setattr(notification_service, "send_email", fake_send_email)
+    return sent
 
 
 @pytest.fixture()

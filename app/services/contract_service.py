@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.core.storage import ALLOWED_DOCUMENT_TYPES, save_upload
 from app.models.contract import Contract
-from app.models.enums import ContractStatus, MilestoneStatus
+from app.models.enums import ContractStatus, MilestoneStatus, NotificationEventType
 from app.models.user import User
 from app.repositories.contract_repo import ContractRepository
 from app.repositories.milestone_repo import MilestoneRepository
+from app.repositories.user_repo import UserRepository
+from app.services import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,17 @@ def _complete_contract(db: Session, user: User, contract: Contract) -> Contract:
         contract, status=ContractStatus.COMPLETED, completed_at=datetime.now(timezone.utc)
     )
     logger.info("Contract %s completed by client %s", contract.id, user.id)
+
+    freelancer = UserRepository(db).get_by_id(contract.freelancer_id)
+    if freelancer is not None:
+        job_title = contract.proposal.job.title if contract.proposal and contract.proposal.job else "your contract"
+        notification_service.notify(
+            db,
+            freelancer,
+            NotificationEventType.CONTRACT_COMPLETED,
+            {"freelancer_name": freelancer.full_name or freelancer.email, "job_title": job_title},
+            resource_id=contract.id,
+        )
     return contract
 
 

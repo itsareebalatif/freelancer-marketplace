@@ -3,12 +3,14 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
-from app.models.enums import ContractStatus
+from app.models.enums import ContractStatus, NotificationEventType
 from app.models.review import Review
 from app.models.user import User
 from app.repositories.contract_repo import ContractRepository
 from app.repositories.review_repo import ReviewRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.review import ReviewCreate
+from app.services import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,20 @@ def create_review(db: Session, user: User, contract_id, data: ReviewCreate) -> R
         contract_id=contract_id, reviewer_id=user.id, reviewee_id=reviewee_id, **data.model_dump()
     )
     logger.info("Review %s left on contract %s by %s for %s", review.id, contract_id, user.id, reviewee_id)
+
+    reviewee = UserRepository(db).get_by_id(reviewee_id)
+    if reviewee is not None:
+        notification_service.notify(
+            db,
+            reviewee,
+            NotificationEventType.REVIEW_RECEIVED,
+            {
+                "reviewee_name": reviewee.full_name or reviewee.email,
+                "rating": review.rating,
+                "comment": review.comment or "",
+            },
+            resource_id=review.id,
+        )
     return review
 
 

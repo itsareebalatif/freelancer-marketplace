@@ -20,7 +20,8 @@ freelancer-marketplace/
 │   ├── test_proposals.py         # Submitting proposals, duplicate prevention
 │   ├── test_contracts.py         # Proposal acceptance transaction & contract creation
 │   ├── test_milestones.py        # Milestone transitions and approval flows
-│   └── test_reviews.py           # Review eligibility and duplicate review checks
+│   ├── test_reviews.py           # Review eligibility and duplicate review checks
+│   └── test_notifications.py     # Notification delivery, retries, idempotency, preferences
 │
 └── app/
     ├── __init__.py
@@ -94,8 +95,67 @@ freelancer-marketplace/
         ├── proposals.py          # /jobs/{id}/proposals, /proposals/{id}/accept
         ├── contracts.py          # /contracts/{id}, /contracts/{id}/complete
         ├── milestones.py         # /contracts/{id}/milestones, /milestones/{id}/submit
-        └── reviews.py            # /contracts/{id}/reviews
+        ├── reviews.py            # /contracts/{id}/reviews
+        └── notifications.py      # /api/notifications, /api/notifications/preferences, /api/notifications/test
 
+
+## Email notifications
+
+Event-driven email notifications, sent through [Resend](https://resend.com).
+
+**Design decision:** Supabase's built-in email delivery only covers Supabase Auth flows (signup/reset
+emails). This project uses its own JWT auth, not Supabase Auth, so there's nothing to hook into there.
+Instead, the notification module calls the Resend API directly from the FastAPI backend — the API key
+never leaves the server — and stores all event/delivery state in the same Supabase-hosted Postgres
+database the rest of the app already uses.
+
+**Environment variables** (see `.env.example`):
+- `RESEND_API_KEY` — Resend API key.
+- `EMAIL_FROM_ADDRESS` — verified sender address (defaults to `onboarding@resend.dev`, Resend's shared
+  sandbox sender, which can only deliver to the email address on the Resend account until a custom
+  domain is verified).
+- `ENV` — set to `production` to disable `POST /api/notifications/test`.
+
+**Architecture** (`app/services/notification_service.py`):
+- `notify(db, user, event_type, context, resource_id=...)` is called by business services (never by
+  routers) after their own transaction has already committed, so a notification problem can never roll
+  back a successful proposal/contract/milestone action.
+- Each call first checks the `notifications` table for an existing row with the same
+  `idempotency_key` (`"{event_type}:{resource_id}"`). If one exists, the call is a no-op — this is what
+  makes retried requests safe from duplicate emails.
+- It then checks `notification_preferences` for that user/event; if the user opted out, a `SKIPPED` row
+  is recorded and nothing is sent.
+- Otherwise it renders the event's template (`app/services/notification_templates.py`), calls Resend
+  through `app/core/email_provider.py`, and records the result as `SENT` or `FAILED` (with the error
+  message) on the same `notifications` row. The whole pipeline is wrapped in a catch-all so a Resend
+  outage or bug never bubbles up into the calling request.
+- Delivery is synchronous (inline in the request) rather than via a background queue — the Resend call
+  is a single fast HTTP request, and this kept the implementation simple. If delivery volume grows, the
+  same `notify()` call can be swapped to hand off to `BackgroundTasks` or a real queue without changing
+  any call site.
+
+**Events wired up:** `USER_REGISTERED` (registration), `PROPOSAL_RECEIVED` (submit proposal → notifies
+the job's client), `PROPOSAL_ACCEPTED` / `PROPOSAL_REJECTED` / `CONTRACT_CREATED` (client decides on a
+proposal → notifies the freelancer), `MILESTONE_SUBMITTED` (→ notifies the client),
+`MILESTONE_APPROVED` / `MILESTONE_REJECTED` (→ notifies the freelancer), `CONTRACT_COMPLETED` (→
+notifies the freelancer), `REVIEW_RECEIVED` (→ notifies the reviewee).
+
+**Known simplification:** the idempotency key is `event_type + resource_id`, so if the exact same event
+type legitimately fires twice for the same resource (e.g. a milestone resubmitted after rejection still
+produces a second `MILESTONE_SUBMITTED` event on the same milestone id), the second email is treated as
+a duplicate and suppressed. This favors "never spam on retries" over covering every resubmission edge
+case, which was an acceptable trade-off at this scope.
+
+**API:**
+- `GET /api/notifications` — paginated history for the current user.
+- `GET /api/notifications/preferences` — per-event email opt-in/out (defaults to enabled).
+- `PATCH /api/notifications/preferences` — update preferences.
+- `POST /api/notifications/test` — sends a real test email to the current user; disabled when `ENV=production`.
+
+**Testing:** `tests/conftest.py` has an autouse fixture that monkeypatches the Resend call, so the whole
+suite (including this module's tests in `tests/test_notifications.py`) never makes a real network call.
+`test_notifications.py` covers: success, provider failure (recorded as `FAILED`, request still
+succeeds), duplicate-event suppression, preference opt-out, and the production-disabled test endpoint.
 
 
 1. Build the image
@@ -133,3 +193,8 @@ docker rm -f freelancer-api
 docker build -t freelancer-marketplace .
 docker run -d --name freelancer-api --env-file .env -p 8000:8000 freelancer-marketplace
 I just ran through all of this for real (build → run → hit /health → hit /docs → both returned 200) to make sure these exact commands work before giving them to you — no docker-compose file exists in this project, so this is genuinely the whole process.
+
+
+
+
+.venv/bin/python -m pytest tests/

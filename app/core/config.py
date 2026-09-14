@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     PORT: int = 8000
     COOKIE_SECURE: bool = False
+    ENV: str = "development"
+
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM_ADDRESS: str = "onboarding@resend.dev"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

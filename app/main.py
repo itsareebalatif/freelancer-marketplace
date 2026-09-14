@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.exceptions import AppError
 from app.core.logging_config import setup_logging
 from app.core.storage import UPLOAD_ROOT
-from app.routers import auth, contracts, jobs, milestones, profiles, proposals, reviews, skills
+from app.routers import auth, contracts, jobs, milestones, notifications, profiles, proposals, reviews, skills
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -45,3 +45,4 @@ app.include_router(proposals.router)
 app.include_router(contracts.router)
 app.include_router(milestones.router)
 app.include_router(reviews.router)
+app.include_router(notifications.router)
