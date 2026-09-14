@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -31,7 +32,9 @@ def get_contract(db: Session, user: User, contract_id) -> Contract:
     return contract
 
 
-def _complete_contract(db: Session, user: User, contract: Contract) -> Contract:
+def _complete_contract(
+    db: Session, user: User, contract: Contract, background_tasks: BackgroundTasks | None = None
+) -> Contract:
     if contract.client_id != user.id:
         raise ForbiddenError("Only the client can complete this contract", code="NOT_CONTRACT_CLIENT")
 
@@ -62,11 +65,14 @@ def _complete_contract(db: Session, user: User, contract: Contract) -> Contract:
             NotificationEventType.CONTRACT_COMPLETED,
             {"freelancer_name": freelancer.full_name or freelancer.email, "job_title": job_title},
             resource_id=contract.id,
+            background_tasks=background_tasks,
         )
     return contract
 
 
-def update_contract(db: Session, user: User, contract_id, data) -> Contract:
+def update_contract(
+    db: Session, user: User, contract_id, data, background_tasks: BackgroundTasks | None = None
+) -> Contract:
     contract = ContractRepository(db).get_by_id(contract_id)
     if contract is None:
         raise NotFoundError("Contract not found", code="CONTRACT_NOT_FOUND")
@@ -80,7 +86,7 @@ def update_contract(db: Session, user: User, contract_id, data) -> Contract:
             "Status can only be set to COMPLETED via this endpoint", code="STATUS_NOT_CLIENT_SETTABLE"
         )
 
-    return _complete_contract(db, user, contract)
+    return _complete_contract(db, user, contract, background_tasks)
 
 
 def upload_document(db: Session, user: User, contract_id, file) -> Contract:

@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db.Session import get_db
@@ -41,10 +41,11 @@ def get_contract(
 def update_contract(
     contract_id: uuid.UUID,
     data: ContractUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_client),
 ):
-    return contract_service.update_contract(db, current_user, contract_id, data)
+    return contract_service.update_contract(db, current_user, contract_id, data, background_tasks)
 
 
 @router.post("/{contract_id}/milestones", response_model=MilestoneOut, status_code=status.HTTP_201_CREATED)

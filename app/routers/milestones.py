@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 from app.db.Session import get_db
@@ -25,7 +25,8 @@ def get_milestone(
 def update_milestone(
     milestone_id: uuid.UUID,
     data: MilestoneUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return milestone_service.update_milestone(db, current_user, milestone_id, data)
+    return milestone_service.update_milestone(db, current_user, milestone_id, data, background_tasks)

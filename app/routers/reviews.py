@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.Session import get_db
@@ -19,10 +19,11 @@ router = APIRouter(tags=["reviews"])
 def create_review(
     contract_id: uuid.UUID,
     data: ReviewCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return review_service.create_review(db, current_user, contract_id, data)
+    return review_service.create_review(db, current_user, contract_id, data, background_tasks)
 
 
 @router.get("/contracts/{contract_id}/reviews", response_model=list[ReviewOut])

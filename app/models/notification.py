@@ -24,6 +24,7 @@ class Notification(Base, TimestampMixin):
         Enum(NotificationStatus, native_enum=False), default=NotificationStatus.PENDING, nullable=False
     )
     subject: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    body: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     idempotency_key: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

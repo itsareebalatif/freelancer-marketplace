@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, UnauthorizedError
@@ -20,7 +21,7 @@ from app.services import notification_service
 logger = logging.getLogger(__name__)
 
 
-def register(db: Session, data: RegisterRequest) -> User:
+def register(db: Session, data: RegisterRequest, background_tasks: BackgroundTasks | None = None) -> User:
     users = UserRepository(db)
     if users.get_by_email(data.email) is not None:
         logger.warning("Registration rejected — email already exists: %s", data.email)
@@ -40,6 +41,7 @@ def register(db: Session, data: RegisterRequest) -> User:
         NotificationEventType.USER_REGISTERED,
         {"full_name": user.full_name or user.email},
         resource_id=user.id,
+        background_tasks=background_tasks,
     )
     return user
 

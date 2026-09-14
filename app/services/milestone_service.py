@@ -1,5 +1,6 @@
 import logging
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -52,7 +53,9 @@ def get_milestone(db: Session, user: User, milestone_id) -> Milestone:
     return milestone
 
 
-def _submit_milestone(db: Session, user: User, milestone: Milestone, contract) -> Milestone:
+def _submit_milestone(
+    db: Session, user: User, milestone: Milestone, contract, background_tasks: BackgroundTasks | None
+) -> Milestone:
     if contract.freelancer_id != user.id:
         raise ForbiddenError(
             "Only the assigned freelancer can submit this milestone", code="NOT_CONTRACT_FREELANCER"
@@ -77,12 +80,18 @@ def _submit_milestone(db: Session, user: User, milestone: Milestone, contract) -
             NotificationEventType.MILESTONE_SUBMITTED,
             {"client_name": client.full_name or client.email, "milestone_title": milestone.title},
             resource_id=milestone.id,
+            background_tasks=background_tasks,
         )
     return milestone
 
 
 def _client_review_milestone(
-    db: Session, user: User, milestone: Milestone, contract, new_status: MilestoneStatus
+    db: Session,
+    user: User,
+    milestone: Milestone,
+    contract,
+    new_status: MilestoneStatus,
+    background_tasks: BackgroundTasks | None,
 ) -> Milestone:
     if contract.client_id != user.id:
         raise ForbiddenError("Only the client can review this milestone", code="NOT_CONTRACT_CLIENT")
@@ -111,11 +120,14 @@ def _client_review_milestone(
             event_type,
             {"freelancer_name": freelancer.full_name or freelancer.email, "milestone_title": milestone.title},
             resource_id=milestone.id,
+            background_tasks=background_tasks,
         )
     return milestone
 
 
-def update_milestone(db: Session, user: User, milestone_id, data) -> Milestone:
+def update_milestone(
+    db: Session, user: User, milestone_id, data, background_tasks: BackgroundTasks | None = None
+) -> Milestone:
     milestone, contract = _get_visible_milestone(db, user, milestone_id)
 
     new_status = data.model_dump(exclude_unset=True).get("status")
@@ -123,10 +135,10 @@ def update_milestone(db: Session, user: User, milestone_id, data) -> Milestone:
         raise ConflictError("Nothing to update — pass a status", code="NO_CHANGES")
 
     if new_status == MilestoneStatus.SUBMITTED:
-        return _submit_milestone(db, user, milestone, contract)
+        return _submit_milestone(db, user, milestone, contract, background_tasks)
 
     if new_status in (MilestoneStatus.APPROVED, MilestoneStatus.REJECTED):
-        return _client_review_milestone(db, user, milestone, contract, new_status)
+        return _client_review_milestone(db, user, milestone, contract, new_status, background_tasks)
 
     raise ConflictError(
         "Status can only be set to SUBMITTED, APPROVED, or REJECTED", code="STATUS_NOT_CLIENT_SETTABLE"

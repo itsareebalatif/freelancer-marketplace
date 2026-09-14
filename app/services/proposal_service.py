@@ -1,5 +1,6 @@
 import logging
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -27,7 +28,9 @@ def _resolve_skills(db: Session, skill_ids: list) -> list:
     return skills
 
 
-def submit_proposal(db: Session, freelancer: User, job_id, data: ProposalCreate) -> Proposal:
+def submit_proposal(
+    db: Session, freelancer: User, job_id, data: ProposalCreate, background_tasks: BackgroundTasks | None = None
+) -> Proposal:
     job = JobRepository(db).get_by_id(job_id)
     if job is None:
         raise NotFoundError("Job not found", code="JOB_NOT_FOUND")
@@ -62,6 +65,7 @@ def submit_proposal(db: Session, freelancer: User, job_id, data: ProposalCreate)
                 "job_title": job.title,
             },
             resource_id=proposal.id,
+            background_tasks=background_tasks,
         )
     return proposal
 
@@ -94,7 +98,9 @@ def get_proposal(db: Session, user: User, proposal_id) -> Proposal:
     return proposal
 
 
-def _reject_proposal(db: Session, client: User, proposal: Proposal, job) -> Proposal:
+def _reject_proposal(
+    db: Session, client: User, proposal: Proposal, job, background_tasks: BackgroundTasks | None
+) -> Proposal:
     if job is None or job.client_id != client.id:
         raise ForbiddenError("You don't own this job", code="NOT_JOB_OWNER")
 
@@ -114,11 +120,14 @@ def _reject_proposal(db: Session, client: User, proposal: Proposal, job) -> Prop
             NotificationEventType.PROPOSAL_REJECTED,
             {"freelancer_name": freelancer.full_name or freelancer.email, "job_title": job.title},
             resource_id=proposal.id,
+            background_tasks=background_tasks,
         )
     return proposal
 
 
-def _accept_proposal(db: Session, client: User, proposal: Proposal, job) -> Proposal:
+def _accept_proposal(
+    db: Session, client: User, proposal: Proposal, job, background_tasks: BackgroundTasks | None
+) -> Proposal:
     if job is None or job.client_id != client.id:
         raise ForbiddenError("You don't own this job", code="NOT_JOB_OWNER")
 
@@ -174,6 +183,7 @@ def _accept_proposal(db: Session, client: User, proposal: Proposal, job) -> Prop
             NotificationEventType.PROPOSAL_ACCEPTED,
             {"freelancer_name": freelancer_name, "job_title": job.title},
             resource_id=proposal.id,
+            background_tasks=background_tasks,
         )
         notification_service.notify(
             db,
@@ -181,11 +191,14 @@ def _accept_proposal(db: Session, client: User, proposal: Proposal, job) -> Prop
             NotificationEventType.CONTRACT_CREATED,
             {"freelancer_name": freelancer_name, "job_title": job.title},
             resource_id=contract.id,
+            background_tasks=background_tasks,
         )
     return proposal
 
 
-def update_proposal(db: Session, client: User, proposal_id, data) -> Proposal:
+def update_proposal(
+    db: Session, client: User, proposal_id, data, background_tasks: BackgroundTasks | None = None
+) -> Proposal:
     proposal = ProposalRepository(db).get_by_id(proposal_id)
     if proposal is None:
         raise NotFoundError("Proposal not found", code="PROPOSAL_NOT_FOUND")
@@ -197,10 +210,10 @@ def update_proposal(db: Session, client: User, proposal_id, data) -> Proposal:
         raise ConflictError("Nothing to update — pass a status", code="NO_CHANGES")
 
     if new_status == ProposalStatus.ACCEPTED:
-        return _accept_proposal(db, client, proposal, job)
+        return _accept_proposal(db, client, proposal, job, background_tasks)
 
     if new_status == ProposalStatus.REJECTED:
-        return _reject_proposal(db, client, proposal, job)
+        return _reject_proposal(db, client, proposal, job, background_tasks)
 
     raise ConflictError(
         "Status can only be set to ACCEPTED or REJECTED", code="STATUS_NOT_CLIENT_SETTABLE"

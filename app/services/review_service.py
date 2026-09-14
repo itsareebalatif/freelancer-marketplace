@@ -1,5 +1,6 @@
 import logging
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -15,7 +16,9 @@ from app.services import notification_service
 logger = logging.getLogger(__name__)
 
 
-def create_review(db: Session, user: User, contract_id, data: ReviewCreate) -> Review:
+def create_review(
+    db: Session, user: User, contract_id, data: ReviewCreate, background_tasks: BackgroundTasks | None = None
+) -> Review:
     contract = ContractRepository(db).get_by_id(contract_id)
     if contract is None:
         raise NotFoundError("Contract not found", code="CONTRACT_NOT_FOUND")
@@ -51,6 +54,7 @@ def create_review(db: Session, user: User, contract_id, data: ReviewCreate) -> R
                 "comment": review.comment or "",
             },
             resource_id=review.id,
+            background_tasks=background_tasks,
         )
     return review
 

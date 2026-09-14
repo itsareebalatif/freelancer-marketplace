@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ForbiddenError
@@ -23,10 +23,11 @@ require_freelancer = require_role(UserRole.FREELANCER)
 def submit_proposal(
     job_id: uuid.UUID,
     data: ProposalCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_freelancer),
 ):
-    return proposal_service.submit_proposal(db, current_user, job_id, data)
+    return proposal_service.submit_proposal(db, current_user, job_id, data, background_tasks)
 
 
 @router.get("/proposals", response_model=PaginatedResponse[ProposalOut])
@@ -62,7 +63,8 @@ def get_proposal(
 def update_proposal(
     proposal_id: uuid.UUID,
     data: ProposalUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_client),
 ):
-    return proposal_service.update_proposal(db, current_user, proposal_id, data)
+    return proposal_service.update_proposal(db, current_user, proposal_id, data, background_tasks)

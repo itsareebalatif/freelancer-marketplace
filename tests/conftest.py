@@ -40,7 +40,7 @@ SQLiteDialect_pysqlite.colspecs = {
 
 
 @pytest.fixture()
-def db_session():
+def db_session(monkeypatch):
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -49,6 +49,13 @@ def db_session():
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     Base.metadata.create_all(engine)
+
+    # Notification delivery opens its own session (it may run as a background task,
+    # outliving the request's session) via app.db.Session.SessionLocal, which is bound
+    # to the real DATABASE_URL. Point it at this test's in-memory engine instead, so
+    # background delivery reads/writes the same data the test set up.
+    monkeypatch.setattr(notification_service, "SessionLocal", TestingSessionLocal)
+
     session = TestingSessionLocal()
     try:
         yield session

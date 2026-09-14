@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -29,8 +29,8 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    return auth_service.register(db, data)
+def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    return auth_service.register(db, data, background_tasks)
 
 
 @router.post("/login", response_model=LoginResponse)
