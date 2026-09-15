@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block preheader %}"{{ milestone_title }}" was submitted for your review.{% endblock %}
+{% block icon %}📤{% endblock %}
+{% block accent %}#2563eb{% endblock %}
+{% block tint %}#eff6ff{% endblock %}
+{% block eyebrow %}Milestone{% endblock %}
+{% block heading %}A milestone needs your review{% endblock %}
+{% block content %}
+<p>Hi {{ client_name }},</p>
+<p>A milestone has been submitted for your review:</p>
+<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ milestone_title }}</div>
+<p>Log in to approve or reject it.</p>
+{% endblock %}

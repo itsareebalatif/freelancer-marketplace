@@ -1,4 +1,11 @@
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 from app.models.enums import NotificationEventType
+
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates" / "email"
+_env = Environment(loader=FileSystemLoader(_TEMPLATES_DIR), autoescape=select_autoescape(["html"]))
 
 
 class _SafeDict(dict):
@@ -6,61 +13,25 @@ class _SafeDict(dict):
         return ""
 
 
-TEMPLATES = {
-    NotificationEventType.USER_REGISTERED: (
-        "Welcome to Freelancer Marketplace",
-        "Hi {full_name},\n\nYour account has been created successfully. You can now start "
-        "posting jobs or submitting proposals.\n\n Freelancer Marketplace",
-    ),
-    NotificationEventType.PROPOSAL_RECEIVED: (
-        "New proposal on your job \"{job_title}\"",
-        "Hi {client_name},\n\n{freelancer_name} submitted a proposal for your job "
-        "\"{job_title}\".\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.PROPOSAL_ACCEPTED: (
-        "Your proposal was accepted",
-        "Hi {freelancer_name},\n\nYour proposal for \"{job_title}\" was accepted. A contract "
-        "has been created.\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.PROPOSAL_REJECTED: (
-        "Your proposal was not selected",
-        "Hi {freelancer_name},\n\nYour proposal for \"{job_title}\" was not selected this "
-        "time.\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.CONTRACT_CREATED: (
-        "New contract created",
-        "Hi {freelancer_name},\n\nA contract for \"{job_title}\" is now active.\n\n"
-        "— Freelancer Marketplace",
-    ),
-    NotificationEventType.MILESTONE_SUBMITTED: (
-        "Milestone submitted for review",
-        "Hi {client_name},\n\nThe milestone \"{milestone_title}\" has been submitted for your "
-        "review.\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.MILESTONE_APPROVED: (
-        "Milestone approved",
-        "Hi {freelancer_name},\n\nYour milestone \"{milestone_title}\" was approved.\n\n"
-        "— Freelancer Marketplace",
-    ),
-    NotificationEventType.MILESTONE_REJECTED: (
-        "Milestone rejected",
-        "Hi {freelancer_name},\n\nYour milestone \"{milestone_title}\" was rejected. Please "
-        "review the feedback and resubmit.\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.CONTRACT_COMPLETED: (
-        "Contract completed",
-        "Hi {freelancer_name},\n\nThe contract for \"{job_title}\" has been marked "
-        "completed.\n\n— Freelancer Marketplace",
-    ),
-    NotificationEventType.REVIEW_RECEIVED: (
-        "You received a new review",
-        "Hi {reviewee_name},\n\nYou received a {rating}-star review: \"{comment}\"\n\n"
-        "— Freelancer Marketplace",
-    ),
+# Subjects are plain text (no HTML needed), so they stay simple format strings.
+# The body is a full HTML template — the file name below matches the event's
+# lowercased name under app/templates/email/.
+SUBJECTS = {
+    NotificationEventType.USER_REGISTERED: "Welcome to Freelancer Marketplace",
+    NotificationEventType.PROPOSAL_RECEIVED: 'New proposal on your job "{job_title}"',
+    NotificationEventType.PROPOSAL_ACCEPTED: "Your proposal was accepted",
+    NotificationEventType.PROPOSAL_REJECTED: "Your proposal was not selected",
+    NotificationEventType.CONTRACT_CREATED: "New contract created",
+    NotificationEventType.MILESTONE_SUBMITTED: "Milestone submitted for review",
+    NotificationEventType.MILESTONE_APPROVED: "Milestone approved",
+    NotificationEventType.MILESTONE_REJECTED: "Milestone rejected",
+    NotificationEventType.CONTRACT_COMPLETED: "Contract completed",
+    NotificationEventType.REVIEW_RECEIVED: "You received a new review",
 }
 
 
 def render_template(event_type: NotificationEventType, context: dict) -> tuple[str, str]:
-    subject, body = TEMPLATES[event_type]
-    safe_context = _SafeDict(context)
-    return subject.format_map(safe_context), body.format_map(safe_context)
+    subject = SUBJECTS[event_type].format_map(_SafeDict(context))
+    template = _env.get_template(f"{event_type.value.lower()}.html")
+    html = template.render(**context)
+    return subject, html

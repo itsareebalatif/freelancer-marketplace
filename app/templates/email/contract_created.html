@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block preheader %}A new contract is active for "{{ job_title }}".{% endblock %}
+{% block icon %}📄{% endblock %}
+{% block accent %}#7c3aed{% endblock %}
+{% block tint %}#f5f3ff{% endblock %}
+{% block eyebrow %}Contract{% endblock %}
+{% block heading %}Your contract is now active{% endblock %}
+{% block content %}
+<p>Hi {{ freelancer_name }},</p>
+<p>A new contract is now active for:</p>
+<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ job_title }}</div>
+<p>You can track milestones and progress from your dashboard.</p>
+{% endblock %}

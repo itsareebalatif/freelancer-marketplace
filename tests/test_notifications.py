@@ -4,7 +4,7 @@ import app.services.notification_service as notification_service
 def test_registration_sends_welcome_email(client, mock_email_provider):
     client.post(
         "/auth/register",
-        json={"email": "new@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "new@example.com", "password": "Password123!", "role": "CLIENT"},
     )
 
     assert any(m["to"] == "new@example.com" for m in mock_email_provider)
@@ -46,7 +46,7 @@ def test_delivery_failure_is_recorded_and_does_not_break_the_request(client, mon
 
     response = client.post(
         "/auth/register",
-        json={"email": "failcase@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "failcase@example.com", "password": "Password123!", "role": "CLIENT"},
     )
 
     assert response.status_code == 201
@@ -54,7 +54,7 @@ def test_delivery_failure_is_recorded_and_does_not_break_the_request(client, mon
     headers = {
         "Authorization": "Bearer "
         + client.post(
-            "/auth/login", json={"email": "failcase@example.com", "password": "password123"}
+            "/auth/login", json={"email": "failcase@example.com", "password": "Password123!"}
         ).json()["access_token"]
     }
     notifications = client.get("/api/notifications", headers=headers).json()["items"]
@@ -70,11 +70,12 @@ def test_duplicate_event_does_not_send_a_second_email(client_auth_headers, freel
     freelancer = UserRepository(db_session).get_by_email("freelancer@example.com")
     mock_email_provider.clear()
 
+    context = {"reviewee_name": "Freelancer", "rating": 5, "comment": "Great work"}
     notification_service.notify(
-        db_session, freelancer, NotificationEventType.REVIEW_RECEIVED, {"reviewee_name": "Freelancer"}, resource_id="fixed-id"
+        db_session, freelancer, NotificationEventType.REVIEW_RECEIVED, context, resource_id="fixed-id"
     )
     notification_service.notify(
-        db_session, freelancer, NotificationEventType.REVIEW_RECEIVED, {"reviewee_name": "Freelancer"}, resource_id="fixed-id"
+        db_session, freelancer, NotificationEventType.REVIEW_RECEIVED, context, resource_id="fixed-id"
     )
 
     assert len(mock_email_provider) == 1
@@ -146,10 +147,10 @@ def test_temporary_failure_is_retried_and_eventually_succeeds(client, monkeypatc
 
     client.post(
         "/auth/register",
-        json={"email": "retrycase@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "retrycase@example.com", "password": "Password123!", "role": "CLIENT"},
     )
     token = client.post(
-        "/auth/login", json={"email": "retrycase@example.com", "password": "password123"}
+        "/auth/login", json={"email": "retrycase@example.com", "password": "Password123!"}
     ).json()["access_token"]
 
     notifications = client.get(
@@ -172,10 +173,10 @@ def test_permanent_failure_is_not_retried(client, monkeypatch):
 
     client.post(
         "/auth/register",
-        json={"email": "permanentfail@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "permanentfail@example.com", "password": "Password123!", "role": "CLIENT"},
     )
     token = client.post(
-        "/auth/login", json={"email": "permanentfail@example.com", "password": "password123"}
+        "/auth/login", json={"email": "permanentfail@example.com", "password": "Password123!"}
     ).json()["access_token"]
 
     notifications = client.get(

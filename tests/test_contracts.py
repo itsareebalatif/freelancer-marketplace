@@ -38,10 +38,10 @@ def test_accepting_one_proposal_rejects_the_others(client, client_auth_headers, 
 
     client.post(
         "/auth/register",
-        json={"email": "other_freelancer@example.com", "password": "password123", "role": "FREELANCER"},
+        json={"email": "other_freelancer@example.com", "password": "Password123!", "role": "FREELANCER"},
     )
     other_login = client.post(
-        "/auth/login", json={"email": "other_freelancer@example.com", "password": "password123"}
+        "/auth/login", json={"email": "other_freelancer@example.com", "password": "Password123!"}
     )
     other_headers = {"Authorization": f"Bearer {other_login.json()['access_token']}"}
     losing = client.post(
@@ -83,9 +83,9 @@ def test_non_participant_cannot_upload_contract_document(client, active_contract
 
     client.post(
         "/auth/register",
-        json={"email": "outsider@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "outsider@example.com", "password": "Password123!", "role": "CLIENT"},
     )
-    login = client.post("/auth/login", json={"email": "outsider@example.com", "password": "password123"})
+    login = client.post("/auth/login", json={"email": "outsider@example.com", "password": "Password123!"})
     outsider_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     response = client.post(

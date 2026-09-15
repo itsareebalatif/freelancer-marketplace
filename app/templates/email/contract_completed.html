@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block preheader %}Your contract for "{{ job_title }}" is complete.{% endblock %}
+{% block icon %}🏁{% endblock %}
+{% block accent %}#0d9488{% endblock %}
+{% block tint %}#f0fdfa{% endblock %}
+{% block eyebrow %}Contract{% endblock %}
+{% block heading %}Contract completed{% endblock %}
+{% block content %}
+<p>Hi {{ freelancer_name }},</p>
+<p>The contract below has been marked completed:</p>
+<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ job_title }}</div>
+<p>Thanks for your work — feel free to leave a review for your client.</p>
+{% endblock %}

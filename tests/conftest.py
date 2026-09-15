@@ -124,12 +124,12 @@ def register_and_login(client, email: str, password: str, role: str) -> dict:
 
 @pytest.fixture()
 def client_auth_headers(client):
-    return register_and_login(client, "client@example.com", "password123", "CLIENT")
+    return register_and_login(client, "client@example.com", "Password123!", "CLIENT")
 
 
 @pytest.fixture()
 def freelancer_auth_headers(client):
-    return register_and_login(client, "freelancer@example.com", "password123", "FREELANCER")
+    return register_and_login(client, "freelancer@example.com", "Password123!", "FREELANCER")
 
 
 @pytest.fixture()

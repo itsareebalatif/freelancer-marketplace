@@ -41,10 +41,10 @@ def test_another_client_cannot_update_someone_elses_job(client, client_auth_head
 
     client.post(
         "/auth/register",
-        json={"email": "other_client@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "other_client@example.com", "password": "Password123!", "role": "CLIENT"},
     )
     login = client.post(
-        "/auth/login", json={"email": "other_client@example.com", "password": "password123"}
+        "/auth/login", json={"email": "other_client@example.com", "password": "Password123!"}
     )
     other_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 

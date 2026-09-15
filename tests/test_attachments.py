@@ -4,10 +4,10 @@ import app.core.supabase_storage as supabase_storage
 def _second_freelancer_headers(client):
     client.post(
         "/auth/register",
-        json={"email": "other-freelancer@example.com", "password": "password123", "role": "FREELANCER"},
+        json={"email": "other-freelancer@example.com", "password": "Password123!", "role": "FREELANCER"},
     )
     login = client.post(
-        "/auth/login", json={"email": "other-freelancer@example.com", "password": "password123"}
+        "/auth/login", json={"email": "other-freelancer@example.com", "password": "Password123!"}
     )
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
 
@@ -106,9 +106,9 @@ def test_client_cannot_access_unrelated_contract_files(client, active_contract, 
 def _second_client_headers(client):
     client.post(
         "/auth/register",
-        json={"email": "other-client@example.com", "password": "password123", "role": "CLIENT"},
+        json={"email": "other-client@example.com", "password": "Password123!", "role": "CLIENT"},
     )
-    login = client.post("/auth/login", json={"email": "other-client@example.com", "password": "password123"})
+    login = client.post("/auth/login", json={"email": "other-client@example.com", "password": "Password123!"})
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
 
 
