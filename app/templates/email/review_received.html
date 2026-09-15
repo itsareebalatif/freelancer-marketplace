@@ -1,14 +1,10 @@
 {% extends "base.html" %}
 {% block preheader %}You received a {{ rating or 0 }}-star review.{% endblock %}
-{% block icon %}⭐{% endblock %}
-{% block accent %}#f59e0b{% endblock %}
-{% block tint %}#fffbeb{% endblock %}
-{% block eyebrow %}Review{% endblock %}
 {% block heading %}You received a new review{% endblock %}
 {% block content %}
 <p>Hi {{ reviewee_name }},</p>
-<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">
-  <div style="font-size:19px; letter-spacing:3px; color:{{ self.accent() }};">{{ '★' * (rating or 0) }}{{ '☆' * (5 - (rating or 0)) }}</div>
-  {% if comment %}<div style="margin-top:10px; font-weight:400; color:#4b5563;">"{{ comment }}"</div>{% endif %}
+<div class="highlight">
+  <div style="font-size:16px; letter-spacing:2px;">{{ '★' * (rating or 0) }}{{ '☆' * (5 - (rating or 0)) }}</div>
+  {% if comment %}<div style="margin-top:8px; font-weight:400; color:#555555;">"{{ comment }}"</div>{% endif %}
 </div>
 {% endblock %}

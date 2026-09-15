@@ -10,11 +10,9 @@
   body {
     margin: 0;
     padding: 0;
-    background-color: #eef0f6;
-    background-image: radial-gradient(circle at top, #f4f0ff 0%, #eef0f6 55%);
+    background-color: #f6f6f6;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #111827;
-    -webkit-font-smoothing: antialiased;
+    color: #333333;
   }
   .preheader {
     display: none;
@@ -30,107 +28,45 @@
     padding: 40px 16px;
   }
   .card {
-    max-width: 560px;
+    max-width: 480px;
     margin: 0 auto;
     background: #ffffff;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 40px -18px rgba(76, 29, 149, 0.28), 0 2px 8px rgba(17, 24, 39, 0.04);
-  }
-  .header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
-    padding: 30px 32px;
-  }
-  .brand-mark {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    line-height: 32px;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 700;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    padding: 40px 32px;
     text-align: center;
-    vertical-align: middle;
   }
-  .brand-name {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #ffffff;
-    letter-spacing: 0.01em;
-  }
-  .body-padding {
-    padding: 0 32px 32px;
-  }
-  .icon-badge {
-    width: 56px;
-    height: 56px;
-    line-height: 56px;
-    border-radius: 16px;
-    text-align: center;
-    font-size: 26px;
-    margin-top: -28px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 16px -6px rgba(17, 24, 39, 0.25);
-    border: 4px solid #ffffff;
-  }
-  .eyebrow {
-    margin: 0 0 8px;
-    font-size: 11px;
+  .logo {
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    color: #111111;
+    margin-bottom: 28px;
   }
   .heading {
-    margin: 0 0 18px;
-    font-size: 23px;
-    line-height: 1.3;
-    font-weight: 800;
-    color: #111827;
-    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111111;
   }
   .content p {
     margin: 0 0 16px;
-    font-size: 15px;
-    line-height: 1.7;
-    color: #4b5563;
-  }
-  .content strong {
-    color: #111827;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #555555;
   }
   .highlight {
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin: 4px 0 22px;
-    font-size: 15px;
-    font-weight: 700;
-    color: #111827;
-  }
-  .divider {
-    border: none;
-    border-top: 1px solid #f0f1f4;
-    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+    background: #f6f6f6;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 4px 0 20px;
   }
   .footer {
-    padding: 24px 32px 32px;
-    text-align: center;
-    background: #fafafc;
-  }
-  .footer p {
-    margin: 0 0 4px;
+    margin-top: 28px;
     font-size: 12px;
-    line-height: 1.6;
-    color: #9ca3af;
-  }
-  .footer .footer-brand {
-    font-weight: 700;
-    color: #6b7280;
-    letter-spacing: 0.02em;
+    color: #999999;
   }
 </style>
 </head>
@@ -138,22 +74,12 @@
   <span class="preheader">{% block preheader %}{% endblock %}</span>
   <div class="wrapper">
     <div class="card">
-      <div class="header">
-        <span class="brand-mark">FM</span><span class="brand-name">Freelancer Marketplace</span>
+      <div class="logo">Freelancer Marketplace</div>
+      <h1 class="heading">{% block heading %}{% endblock %}</h1>
+      <div class="content">
+        {% block content %}{% endblock %}
       </div>
-      <div class="body-padding">
-        <div class="icon-badge" style="background:{% block tint %}#eef2ff{% endblock %}; color:{{ self.accent() }};">{% block icon %}✦{% endblock %}</div>
-        <div class="eyebrow" style="color:{% block accent %}#4338ca{% endblock %};">{% block eyebrow %}Notification{% endblock %}</div>
-        <h1 class="heading">{% block heading %}{% endblock %}</h1>
-        <div class="content">
-          {% block content %}{% endblock %}
-        </div>
-      </div>
-      <hr class="divider">
-      <div class="footer">
-        <p class="footer-brand">Freelancer Marketplace</p>
-        <p>This is an automated notification sent because of activity on your account.</p>
-      </div>
+      <div class="footer">This is an automated notification sent because of activity on your account.</div>
     </div>
   </div>
 </body>

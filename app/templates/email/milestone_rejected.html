@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 {% block preheader %}Your milestone "{{ milestone_title }}" was rejected.{% endblock %}
-{% block icon %}⚠️{% endblock %}
-{% block accent %}#d97706{% endblock %}
-{% block tint %}#fffbeb{% endblock %}
-{% block eyebrow %}Milestone{% endblock %}
 {% block heading %}Milestone rejected{% endblock %}
 {% block content %}
 <p>Hi {{ freelancer_name }},</p>
 <p>Your milestone was rejected:</p>
-<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ milestone_title }}</div>
+<div class="highlight">{{ milestone_title }}</div>
 <p>Please review the feedback from your client and resubmit.</p>
 {% endblock %}

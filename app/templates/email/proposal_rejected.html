@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 {% block preheader %}An update on your proposal for "{{ job_title }}".{% endblock %}
-{% block icon %}📋{% endblock %}
-{% block accent %}#d97706{% endblock %}
-{% block tint %}#fffbeb{% endblock %}
-{% block eyebrow %}Proposal{% endblock %}
 {% block heading %}Your proposal was not selected{% endblock %}
 {% block content %}
 <p>Hi {{ freelancer_name }},</p>
 <p>Your proposal for the job below was not selected this time:</p>
-<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ job_title }}</div>
+<div class="highlight">{{ job_title }}</div>
 <p>Don't worry — there are plenty of other jobs to apply to.</p>
 {% endblock %}

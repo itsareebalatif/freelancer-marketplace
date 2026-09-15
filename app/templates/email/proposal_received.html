@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 {% block preheader %}{{ freelancer_name }} submitted a proposal for "{{ job_title }}".{% endblock %}
-{% block icon %}📬{% endblock %}
-{% block accent %}#2563eb{% endblock %}
-{% block tint %}#eff6ff{% endblock %}
-{% block eyebrow %}Proposal{% endblock %}
 {% block heading %}You have a new proposal{% endblock %}
 {% block content %}
 <p>Hi {{ client_name }},</p>
 <p><strong>{{ freelancer_name }}</strong> submitted a proposal for your job:</p>
-<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ job_title }}</div>
+<div class="highlight">{{ job_title }}</div>
 <p>Log in to your account to review it.</p>
 {% endblock %}

@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 {% block preheader %}Your proposal for "{{ job_title }}" was accepted.{% endblock %}
-{% block icon %}🎉{% endblock %}
-{% block accent %}#059669{% endblock %}
-{% block tint %}#ecfdf5{% endblock %}
-{% block eyebrow %}Proposal{% endblock %}
 {% block heading %}Your proposal was accepted{% endblock %}
 {% block content %}
 <p>Hi {{ freelancer_name }},</p>
 <p>Good news — your proposal was accepted for:</p>
-<div class="highlight" style="background:{{ self.tint() }}; border-left:3px solid {{ self.accent() }};">{{ job_title }}</div>
+<div class="highlight">{{ job_title }}</div>
 <p>A contract has been created. Log in to get started.</p>
 {% endblock %}
