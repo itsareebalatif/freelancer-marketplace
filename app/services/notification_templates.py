@@ -10,7 +10,7 @@ TEMPLATES = {
     NotificationEventType.USER_REGISTERED: (
         "Welcome to Freelancer Marketplace",
         "Hi {full_name},\n\nYour account has been created successfully. You can now start "
-        "posting jobs or submitting proposals.\n\n— Freelancer Marketplace",
+        "posting jobs or submitting proposals.\n\n Freelancer Marketplace",
     ),
     NotificationEventType.PROPOSAL_RECEIVED: (
         "New proposal on your job \"{job_title}\"",
