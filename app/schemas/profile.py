@@ -6,23 +6,12 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class SkillOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-
-
-class SkillCreate(BaseModel):
-    name: str
-
-
 class FreelancerProfileCreate(BaseModel):
     bio: Optional[str] = None
     hourly_rate: Optional[Decimal] = None
     experience_years: int = 0
     availability: str = "Available"
-    skill_ids: Optional[list[uuid.UUID]] = None
+    skills: list[str] = []
 
 
 class FreelancerProfileUpdate(BaseModel):
@@ -30,7 +19,7 @@ class FreelancerProfileUpdate(BaseModel):
     hourly_rate: Optional[Decimal] = None
     experience_years: Optional[int] = None
     availability: Optional[str] = None
-    skill_ids: Optional[list[uuid.UUID]] = None
+    skills: Optional[list[str]] = None
 
 
 class FreelancerProfileOut(BaseModel):
@@ -43,5 +32,5 @@ class FreelancerProfileOut(BaseModel):
     experience_years: int
     availability: str
     avatar_attachment_id: Optional[uuid.UUID]
-    skills: list[SkillOut]
+    skills: list[str]
     created_at: datetime

@@ -51,7 +51,6 @@ def test_cannot_submit_proposal_to_unpublished_job(client, client_auth_headers, 
 
 def test_proposal_can_be_tagged_with_skills(client, client_auth_headers, freelancer_auth_headers):
     job = _publish_job(client, client_auth_headers)
-    skill = client.post("/skills", json={"name": "Django"}, headers=freelancer_auth_headers).json()
 
     response = client.post(
         f"/jobs/{job['id']}/proposals",
@@ -59,13 +58,13 @@ def test_proposal_can_be_tagged_with_skills(client, client_auth_headers, freelan
             "cover_letter": "I can do this",
             "bid_amount": "500.00",
             "estimated_duration": "2 weeks",
-            "skill_ids": [skill["id"]],
+            "skills": ["Django"],
         },
         headers=freelancer_auth_headers,
     )
 
     assert response.status_code == 201
-    assert [s["name"] for s in response.json()["skills"]] == ["Django"]
+    assert response.json()["skills"] == ["Django"]
 
 
 def test_only_job_owner_can_view_its_proposals(client, client_auth_headers, freelancer_auth_headers):

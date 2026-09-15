@@ -6,7 +6,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import BudgetType, ExperienceLevel, JobDuration, JobStatus, LocationType
-from app.schemas.profile import SkillOut
 
 
 class JobCreate(BaseModel):
@@ -19,11 +18,11 @@ class JobCreate(BaseModel):
     location_type: LocationType = LocationType.REMOTE
     category: Optional[str] = None
     deadline: Optional[datetime] = None
+    skills: list[str] = []
 
 
 class JobSearchFilters(BaseModel):
     mine: bool = False
-    skill_id: Optional[uuid.UUID] = None
     category: Optional[str] = None
     budget_type: Optional[BudgetType] = None
     experience_level: Optional[ExperienceLevel] = None
@@ -44,7 +43,7 @@ class JobUpdate(BaseModel):
     category: Optional[str] = None
     deadline: Optional[datetime] = None
     status: Optional[JobStatus] = None
-    skill_ids: Optional[list[uuid.UUID]] = None
+    skills: Optional[list[str]] = None
 
 
 class JobOut(BaseModel):
@@ -62,5 +61,5 @@ class JobOut(BaseModel):
     category: Optional[str]
     deadline: Optional[datetime]
     status: JobStatus
-    skills: list[SkillOut]
+    skills: list[str]
     created_at: datetime

@@ -15,7 +15,6 @@ from app.routers import (
     profiles,
     proposals,
     reviews,
-    skills,
     users,
 )
 
@@ -47,7 +46,6 @@ def health():
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(profiles.router)
-app.include_router(skills.router)
 app.include_router(jobs.router)
 app.include_router(proposals.router)
 app.include_router(contracts.router)

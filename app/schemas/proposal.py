@@ -6,14 +6,13 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import ProposalStatus
-from app.schemas.profile import SkillOut
 
 
 class ProposalCreate(BaseModel):
     cover_letter: str
     bid_amount: Decimal
     estimated_duration: str
-    skill_ids: Optional[list[uuid.UUID]] = None
+    skills: list[str] = []
 
 
 class ProposalUpdate(BaseModel):
@@ -30,5 +29,5 @@ class ProposalOut(BaseModel):
     bid_amount: Decimal
     estimated_duration: str
     status: ProposalStatus
-    skills: list[SkillOut]
+    skills: list[str]
     created_at: datetime

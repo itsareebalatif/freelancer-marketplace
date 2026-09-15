@@ -53,7 +53,6 @@ def search_jobs(
         page=filters.page,
         page_size=filters.page_size,
         search=search,
-        skill_id=filters.skill_id,
         category=filters.category,
         budget_type=filters.budget_type,
         experience_level=filters.experience_level,

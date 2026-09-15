@@ -55,12 +55,6 @@ class ProposalRepository(BaseRepository):
         self.db.refresh(proposal)
         return proposal
 
-    def set_skills(self, proposal: Proposal, skills: list) -> Proposal:
-        proposal.skills = skills
-        self.db.commit()
-        self.db.refresh(proposal)
-        return proposal
-
     def _paginate(self, query, page: int, page_size: int):
         total = query.count()
         items = query.offset((page - 1) * page_size).limit(page_size).all()

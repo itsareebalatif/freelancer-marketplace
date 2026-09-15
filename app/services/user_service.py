@@ -35,6 +35,6 @@ def get_summary(db: Session, user: User) -> UserSummaryOut:
             fields["bio"] = profile.bio
             fields["hourly_rate"] = profile.hourly_rate
             fields["avatar_attachment_id"] = profile.avatar_attachment_id
-            fields["skills"] = [skill.name for skill in profile.skills]
+            fields["skills"] = profile.skills
 
     return UserSummaryOut(**fields)

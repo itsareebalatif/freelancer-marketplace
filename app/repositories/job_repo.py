@@ -28,12 +28,6 @@ class JobRepository(BaseRepository):
         self.db.refresh(job)
         return job
 
-    def set_skills(self, job: Job, skills: list) -> Job:
-        job.skills = skills
-        self.db.commit()
-        self.db.refresh(job)
-        return job
-
     def _paginate(self, query, page: int, page_size: int):
         total = query.count()
         items = query.offset((page - 1) * page_size).limit(page_size).all()
@@ -45,7 +39,6 @@ class JobRepository(BaseRepository):
         page: int,
         page_size: int,
         search: str | None = None,
-        skill_id=None,
         category: str | None = None,
         budget_type: BudgetType | None = None,
         experience_level: ExperienceLevel | None = None,
@@ -56,9 +49,6 @@ class JobRepository(BaseRepository):
 
         if search:
             query = query.filter(Job.title.ilike(f"%{search}%"))
-
-        if skill_id is not None:
-            query = query.filter(Job.skills.any(id=skill_id))
 
         if category:
             query = query.filter(Job.category.ilike(category))

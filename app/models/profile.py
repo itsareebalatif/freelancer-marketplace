@@ -1,28 +1,11 @@
 import uuid
 from typing import List, Optional
 from decimal import Decimal
-from sqlalchemy import String, Text, Numeric, Integer, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import String, Text, Numeric, Integer, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
-
-class Skill(Base):
-    __tablename__ = "skills"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
-
-    profiles: Mapped[List["FreelancerProfile"]] = relationship(secondary="freelancer_skills", back_populates="skills")
-    jobs: Mapped[List["Job"]] = relationship(secondary="job_skills", back_populates="skills")
-    proposals: Mapped[List["Proposal"]] = relationship(secondary="proposal_skills", back_populates="skills")
-
-
-class FreelancerSkill(Base):
-    __tablename__ = "freelancer_skills"
-
-    freelancer_profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("freelancer_profiles.id", ondelete="CASCADE"), primary_key=True)
-    skill_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True)
 
 
 class FreelancerProfile(Base, TimestampMixin):
@@ -37,6 +20,6 @@ class FreelancerProfile(Base, TimestampMixin):
     avatar_attachment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("attachments.id", ondelete="SET NULL"), nullable=True
     )
+    skills: Mapped[List[str]] = mapped_column(JSON, default=list, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="profile")
-    skills: Mapped[List["Skill"]] = relationship(secondary="freelancer_skills", back_populates="profiles")

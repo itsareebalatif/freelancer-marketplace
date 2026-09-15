@@ -29,7 +29,7 @@ def test_client_summary_reflects_jobs_and_proposals_received(client, client_auth
 
 
 def test_freelancer_summary_reflects_proposals_and_profile(client, client_auth_headers, freelancer_auth_headers):
-    client.post("/profiles", json={"bio": "I build things", "skill_ids": []}, headers=freelancer_auth_headers)
+    client.post("/profiles", json={"bio": "I build things", "skills": []}, headers=freelancer_auth_headers)
 
     job = client.post(
         "/jobs",

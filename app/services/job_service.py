@@ -7,7 +7,6 @@ from app.models.enums import JobStatus
 from app.models.job import Job
 from app.models.user import User
 from app.repositories.job_repo import JobRepository
-from app.repositories.skill_repo import SkillRepository
 from app.schemas.job import JobCreate, JobUpdate
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,6 @@ def list_jobs(
     page: int,
     page_size: int,
     search=None,
-    skill_id=None,
     category=None,
     budget_type=None,
     experience_level=None,
@@ -38,7 +36,6 @@ def list_jobs(
         page=page,
         page_size=page_size,
         search=search,
-        skill_id=skill_id,
         category=category,
         budget_type=budget_type,
         experience_level=experience_level,
@@ -90,7 +87,6 @@ def update_job(db: Session, user: User, job_id, data: JobUpdate) -> Job:
 
     changes = data.model_dump(exclude_unset=True)
     new_status = changes.pop("status", None)
-    skill_ids = changes.pop("skill_ids", None)
 
     if changes:
         if job.status in NOT_EDITABLE_STATUSES:
@@ -102,19 +98,4 @@ def update_job(db: Session, user: User, job_id, data: JobUpdate) -> Job:
         job = JobRepository(db).update(job, **_apply_status_transition(job, new_status))
         logger.info("Job %s status changed to %s by client %s", job.id, new_status, user.id)
 
-    if skill_ids is not None:
-        job = _replace_skills(db, job, skill_ids)
-        logger.info("Job %s skills set to %s by client %s", job.id, skill_ids, user.id)
-
     return job
-
-
-def _replace_skills(db: Session, job: Job, skill_ids: list) -> Job:
-    skills = []
-    for skill_id in skill_ids:
-        skill = SkillRepository(db).get_by_id(skill_id)
-        if skill is None:
-            raise NotFoundError(f"Skill {skill_id} not found", code="SKILL_NOT_FOUND")
-        skills.append(skill)
-
-    return JobRepository(db).set_skills(job, skills)
