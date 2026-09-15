@@ -7,5 +7,9 @@
 {% block heading %}Welcome to Freelancer Marketplace{% endblock %}
 {% block content %}
 <p>Hi {{ full_name }},</p>
-<p>Your account has been created successfully. You can now start posting jobs or submitting proposals.</p>
+{% if is_client %}
+<p>Your account has been created successfully. You can now start posting jobs and reviewing proposals from freelancers.</p>
+{% else %}
+<p>Your account has been created successfully. You can now start browsing jobs and submitting proposals.</p>
+{% endif %}
 {% endblock %}

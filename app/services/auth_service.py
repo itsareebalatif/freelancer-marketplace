@@ -11,7 +11,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models.enums import NotificationEventType
+from app.models.enums import NotificationEventType, UserRole
 from app.models.user import User
 from app.repositories.refresh_token_repo import RefreshTokenRepository
 from app.repositories.user_repo import UserRepository
@@ -39,7 +39,7 @@ def register(db: Session, data: RegisterRequest, background_tasks: BackgroundTas
         db,
         user,
         NotificationEventType.USER_REGISTERED,
-        {"full_name": user.full_name or user.email},
+        {"full_name": user.full_name or user.email, "is_client": user.role == UserRole.CLIENT},
         resource_id=user.id,
         background_tasks=background_tasks,
     )
