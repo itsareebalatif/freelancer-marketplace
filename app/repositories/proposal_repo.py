@@ -1,4 +1,7 @@
+from sqlalchemy import func
+
 from app.models.enums import ProposalStatus
+from app.models.job import Job
 from app.models.proposal import Proposal
 from app.repositories.base import BaseRepository
 
@@ -6,6 +9,24 @@ from app.repositories.base import BaseRepository
 class ProposalRepository(BaseRepository):
     def get_by_id(self, proposal_id) -> Proposal | None:
         return self.db.query(Proposal).filter(Proposal.id == proposal_id).first()
+
+    def count_by_status_for_freelancer(self, freelancer_id) -> dict[str, int]:
+        rows = (
+            self.db.query(Proposal.status, func.count(Proposal.id))
+            .filter(Proposal.freelancer_id == freelancer_id)
+            .group_by(Proposal.status)
+            .all()
+        )
+        return {status.value: count for status, count in rows}
+
+    def count_received_for_client(self, client_id) -> int:
+        return (
+            self.db.query(func.count(Proposal.id))
+            .join(Job, Proposal.job_id == Job.id)
+            .filter(Job.client_id == client_id)
+            .scalar()
+            or 0
+        )
 
     def get_by_job_and_freelancer(self, job_id, freelancer_id) -> Proposal | None:
         return (

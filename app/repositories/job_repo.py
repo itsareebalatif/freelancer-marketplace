@@ -1,3 +1,5 @@
+from sqlalchemy import func
+
 from app.models.job import Job
 from app.models.enums import BudgetType, ExperienceLevel, JobStatus, LocationType
 from app.repositories.base import BaseRepository
@@ -6,6 +8,15 @@ from app.repositories.base import BaseRepository
 class JobRepository(BaseRepository):
     def get_by_id(self, job_id) -> Job | None:
         return self.db.query(Job).filter(Job.id == job_id).first()
+
+    def count_by_status_for_client(self, client_id) -> dict[str, int]:
+        rows = (
+            self.db.query(Job.status, func.count(Job.id))
+            .filter(Job.client_id == client_id)
+            .group_by(Job.status)
+            .all()
+        )
+        return {status.value: count for status, count in rows}
 
     def create(self, *, client_id, **fields) -> Job:
         return self.add(Job(client_id=client_id, **fields))

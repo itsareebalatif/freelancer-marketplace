@@ -1,8 +1,14 @@
+from sqlalchemy import func
+
 from app.models.review import Review
 from app.repositories.base import BaseRepository
 
 
 class ReviewRepository(BaseRepository):
+    def average_rating_for_user(self, user_id) -> float | None:
+        result = self.db.query(func.avg(Review.rating)).filter(Review.reviewee_id == user_id).scalar()
+        return round(float(result), 2) if result is not None else None
+
     def get_by_contract_and_reviewer(self, contract_id, reviewer_id) -> Review | None:
         return (
             self.db.query(Review)
